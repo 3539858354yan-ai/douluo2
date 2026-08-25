@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>斗罗：武魂人生</title>
+<style>
+:root{
+  --bg:#0d0a14;--bg2:#171225;--panel:#1e1830;--panel2:#282040;--gold:#d4af37;
+  --gold2:#f4d77a;--text:#e8e2d0;--muted:#9a8fb8;--rare:#6ec1ff;--epic:#c77dff;
+  --legend:#ffb347;--hidden:#ff4d6d;--ok:#7ee787;--bad:#ff6b6b;--border:#3a2f55;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:radial-gradient(circle at 50% 0%,#241a3d 0%,#0d0a14 70%);color:var(--text);font-family:"PingFang SC","Microsoft YaHei",serif;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column;max-width:900px;margin:0 auto;position:relative}
+.screen{flex:1;overflow-y:auto;padding:14px;display:none;animation:fade .3s}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h1,h2,h3{font-weight:700;letter-spacing:1px}
+.title{text-align:center;color:var(--gold2);text-shadow:0 0 18px rgba(212,175,55,.5);margin:10px 0}
+.btn{background:linear-gradient(180deg,#3a2f55,#241c3a);border:1px solid var(--gold);color:var(--gold2);
+  padding:10px 16px;border-radius:8px;cursor:pointer;font-size:15px;transition:all .15s;display:inline-block;text-align:center}
+.btn:hover{background:linear-gradient(180deg,#4a3d6e,#2e2447);transform:translateY(-1px)}
+.btn:active{transform:translateY(1px)}
+.btn.small{padding:6px 10px;font-size:13px}
+.btn.primary{background:linear-gradient(180deg,#b8902e,#7a5f1a);color:#fff;border-color:var(--gold2)}
+.btn.danger{border-color:var(--bad);color:#ffb3b3}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.col{display:flex;flex-direction:column;gap:6px}
+.grid{display:grid;gap:8px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:600px){.grid-3,.grid-4{grid-template-columns:repeat(2,1fr)}}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;border:1px solid}
+.tag.common{color:#bbb;border-color:#666}
+.tag.rare{color:var(--rare);border-color:var(--rare)}
+.tag.epic{color:var(--epic);border-color:var(--epic)}
+.tag.legend{color:var(--legend);border-color:var(--legend)}
+.tag.hidden{color:var(--hidden);border-color:var(--hidden)}
+.stat{display:flex;justify-content:space-between;font-size:13px;padding:2px 0;border-bottom:1px dashed #2a2240}
+.stat b{color:var(--gold2)}
+.bar{height:8px;background:#000;border-radius:4px;overflow:hidden;margin-top:2px}
+.bar>div{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .3s}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--border);font-size:13px;flex-wrap:wrap;gap:6px}
+.topbar .gold{color:var(--gold2)}
+.nav{display:flex;gap:4px;padding:6px;background:var(--panel);border-top:1px solid var(--border);flex-wrap:wrap;justify-content:center}
+.nav .btn{padding:6px 10px;font-size:12px;flex:1;min-width:60px}
+/* 抽卡 */
+.gacha-stage{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;gap:20px}
+.card-flip{width:200px;height:280px;perspective:1000px;cursor:pointer}
+.card-inner{position:relative;width:100%;height:100%;transition:transform .8s;transform-style:preserve-3d}
+.card-flip.flipped .card-inner{transform:rotateY(180deg)}
+.card-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;text-align:center;border:2px solid var(--gold)}
+.card-back{background:linear-gradient(135deg,#2a1f4a,#0d0a14);background-image:repeating-linear-gradient(45deg,rgba(212,175,55,.08) 0 10px,transparent 10px 20px)}
+.card-back::before{content:"武魂";font-size:40px;color:var(--gold);text-shadow:0 0 20px var(--gold)}
+.card-front{background:linear-gradient(160deg,#2a1f4a,#120c1f);transform:rotateY(180deg)}
+.card-front h3{color:var(--gold2);margin-bottom:8px}
+.card-front .rarity{font-size:12px;margin-bottom:10px}
+.card-front p{font-size:12px;color:var(--muted);line-height:1.5}
+.typein{opacity:0;animation:typein .4s forwards}
+@keyframes typein{to{opacity:1}}
+/* 轮盘 */
+.roulette-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+#rouletteCanvas{max-width:340px;width:100%}
+.pointer{width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid var(--gold2);margin-bottom:-10px;z-index:2;filter:drop-shadow(0 2px 4px #000)}
+/* 战斗 */
+.battle-field{display:flex;justify-content:space-between;align-items:center;min-height:240px;padding:10px;background:linear-gradient(180deg,#1a1330,#0d0a14);border-radius:10px;margin-bottom:10px;position:relative;overflow:hidden}
+.combatant{text-align:center;flex:1;position:relative}
+.combatant .sprite{font-size:48px;display:inline-block;transition:transform .3s}
+.combatant.attack .sprite{animation:atk .4s}
+.combatant.hurt .sprite{animation:hurt .4s}
+@keyframes atk{50%{transform:translateX(30px) scale(1.1)}}
+@keyframes hurt{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px);filter:brightness(2) hue-rotate(-30deg)}75%{transform:translateX(8px)}}
+.hpbar{height:10px;background:#000;border-radius:5px;overflow:hidden;margin:4px auto;width:80%}
+.hpbar>div{height:100%;background:linear-gradient(90deg,#ff4d4d,#ff9a4d);transition:width .4s}
+.log{background:#000;border-radius:8px;padding:8px;height:110px;overflow-y:auto;font-size:13px;line-height:1.6;margin-bottom:8px}
+.log div{opacity:0;animation:fade .3s forwards}
+/* 粒子 */
+.particle{position:fixed;pointer-events:none;width:6px;height:6px;border-radius:50%;background:var(--gold2);z-index:99}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal-box{background:var(--panel);border:1px solid var(--gold);border-radius:12px;padding:18px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto}
+.event-text{font-size:15px;line-height:1.8;margin-bottom:14px;color:#f0e8d0}
+.option{display:block;width:100%;text-align:left;background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;margin-bottom:8px;cursor:pointer;font-size:14px;transition:all .15s}
+.option:hover{border-color:var(--gold);background:#32284f}
+.option:disabled{opacity:.4;cursor:not-allowed}
+.toast{position:fixed;top:20%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);border:1px solid var(--gold);color:var(--gold2);padding:10px 18px;border-radius:8px;z-index:100;animation:fade .3s}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+select,input{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-size:13px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar" class="topbar" style="display:none"></div>
+  <div id="screens"></div>
+  <div id="nav" class="nav" style="display:none"></div>
+</div>
+<div id="modalRoot"></div>
+<script>
+/* ============ 工具：种子随机 ============ */
+function RNG(seed){let s=seed>>>0;return function(){s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+let rng=RNG(Date.now());
+const ri=(a,b)=>Math.floor(rng()*(b-a+1))+a;
+const pick=arr=>arr[Math.floor(rng()*arr.length)];
+const chance=p=>rng()<p;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function weightedPick(list,weightFn){const total=list.reduce((s,x)=>s+weightFn(x),0);let r=rng()*total;for(const x of list){r-=weightFn(x);if(r<=0)return x;}return list[list.length-1];}
+
+/* ============ 数据配置 ============ */
+const RARITY={common:{name:"普通",color:"#bbb",weight:50},rare:{name:"稀有",color:"#6ec1ff",weight:28},epic:{name:"史诗",color:"#c77dff",weight:14},legend:{name:"传说",color:"#ffb347",weight:6},hidden:{name:"隐藏",color:"#ff4d6d",weight:2}};
+
+const TYPES=["强攻","敏攻","控制","辅助","防御","植物","元素","兽","光明","黑暗"];
+// 克制表：攻击方 -> 被克制方 倍率
+const TYPE_CHART={
+  "强攻":{"防御":0.8,"兽":1.2,"植物":1.0},
+  "敏攻":{"辅助":1.5,"控制":0.8,"强攻":0.8},
+  "控制":{"敏攻":1.3,"强攻":1.0,"兽":0.8},
+  "辅助":{"黑暗":0.5,"光明":1.2},
+  "防御":{"强攻":1.2,"敏攻":1.2,"元素":0.8},
+  "植物":{"水":1.0,"防御":1.3,"兽":0.8,"元素":0.8},
+  "元素":{"植物":1.3,"防御":0.8,"兽":1.0},
+  "兽":{"植物":1.3,"控制":1.2,"防御":0.8},
+  "光明":{"黑暗":2.0,"辅助":1.0},
+  "黑暗":{"光明":0.5,"辅助":1.3,"控制":1.0}
+};
+function typeMult(atk,def){return(TYPE_CHART[atk]&&TYPE_CHART[atk][def])||1;}
+
+/* ---- 出身 (22) ---- */
+const ORIGINS=[
+ {id:"village",name:"小村少年",rarity:"common",desc:"生于圣魂村般的平凡村落，父母务农，却怀揣着不平凡的梦。",stats:{comprehension:50,physique:50,luck:50,charm:50,family:10,wealth:5,reputation:0,morality:60,lifespan:80},location:"village",resources:{gold:20},relations:["父亲","母亲"]},
+ {id:"smith",name:"铁匠之子",rarity:"common",desc:"父亲是村里的铁匠，从小与炉火铁锤为伴，臂力过人。",stats:{comprehension:48,physique:65,luck:48,charm:45,family:15,wealth:15,reputation:0,morality:55,lifespan:82},location:"village",resources:{gold:40,item:"铁锤"},relations:["父亲·铁匠"]},
+ {id:"hunter",name:"猎户之女",rarity:"common",desc:"自幼随父入山，箭术精湛，熟悉森林的每一处声响。",stats:{comprehension:52,physique:58,luck:55,charm:50,family:12,wealth:10,reputation:0,morality:58,lifespan:80},location:"village",resources:{gold:25,item:"短弓"},relations:["父亲·猎户"]},
+ {id:"merchant",name:"商贩家庭",rarity:"common",desc:"走南闯北的商贩之家，见多识广，精于算计。",stats:{comprehension:58,physique:45,luck:55,charm:60,family:25,wealth:40,reputation:5,morality:50,lifespan:78},location:"town",resources:{gold:120},relations:["父亲·商贩","母亲"]},
+ {id:"herb",name:"药堂学徒",rarity:"common",desc:"在药堂里长大，识得百草，对炼药有天然亲近。",stats:{comprehension:62,physique:42,luck:50,charm:48,family:18,wealth:20,reputation:0,morality:65,lifespan:85},location:"town",resources:{gold:30,item:"草药包"},relations:["师父·药老"]},
+ {id:"noble",name:"没落贵族",rarity:"rare",desc:"家族曾显赫一时，如今只剩一座旧宅和几块传家玉佩。",stats:{comprehension:60,physique:48,luck:45,charm:68,family:55,wealth:30,reputation:10,morality:55,lifespan:80},location:"town",resources:{gold:80,item:"家传玉佩"},relations:["老管家"]},
+ {id:"audit",name:"学院旁听生",rarity:"rare",desc:"虽无正式学籍，却日日趴在窗外听讲，学识不输正式弟子。",stats:{comprehension:72,physique:40,luck:50,charm:52,family:20,wealth:15,reputation:5,morality:60,lifespan:78},location:"academy",resources:{gold:20,item:"破旧笔记"},relations:["导师·墨先生"]},
+ {id:"circus",name:"流浪艺人",rarity:"rare",desc:"随杂技团四处漂泊，练就一身灵巧身手和察言观色的本事。",stats:{comprehension:55,physique:55,luck:60,charm:70,family:5,wealth:25,reputation:0,morality:52,lifespan:75},location:"town",resources:{gold:50,item:"飞刀"},relations:["班主"]},
+ {id:"hunter_team",name:"猎魂团学徒",rarity:"rare",desc:"加入了一支小型猎魂团，见过魂兽的血，也见过同伴的死。",stats:{comprehension:52,physique:62,luck:48,charm:45,family:15,wealth:35,reputation:8,morality:48,lifespan:72},location:"forest_edge",resources:{gold:60,item:"猎魂刀"},relations:["团长·铁山"]},
+ {id:"lord_kin",name:"城主远亲",rarity:"rare",desc:"与城主家沾点远亲，偶尔能借上几分势力。",stats:{comprehension:55,physique:50,luck:58,charm:62,family:60,wealth:60,reputation:15,morality:50,lifespan:80},location:"city",resources:{gold:150},relations:["城主·远房叔"]},
+ {id:"outer_disciple",name:"大宗门外门弟子",rarity:"epic",desc:"七大宗门之一的外门弟子，有机会凭实力进入内门。",stats:{comprehension:65,physique:60,luck:52,charm:55,family:40,wealth:40,reputation:20,morality:55,lifespan:82},location:"sect",resources:{gold:80,item:"外门令牌"},relations:["师兄","外门长老"]},
+ {id:"royal_bastard",name:"皇室私生子",rarity:"epic",desc:"流落在外的皇室血脉，一旦身份暴露，便是滔天风波。",stats:{comprehension:62,physique:58,luck:40,charm:70,family:70,wealth:50,reputation:10,morality:50,lifespan:78},location:"city",resources:{gold:100,item:"皇室信物"},relations:["乳母"],flags:["royal_blood"]},
+ {id:"temple_outer",name:"武魂殿外围",rarity:"epic",desc:"武魂殿的外围执事，手握一定资源，也背负着殿主的意志。",stats:{comprehension:64,physique:55,luck:55,charm:60,family:50,wealth:70,reputation:25,morality:45,lifespan:80},location:"temple",resources:{gold:150,item:"武魂殿令牌"},relations:["殿主使者"],rep:{temple:20}},
+ {id:"sect_branch",name:"七大宗门旁支",rarity:"epic",desc:"宗门旁支子弟，姓是大姓，却要靠自己挣出路。",stats:{comprehension:63,physique:62,luck:50,charm:58,family:65,wealth:55,reputation:18,morality:55,lifespan:82},location:"sect",resources:{gold:120,item:"宗门功法残卷"},relations:["族长","堂兄"]},
+ {id:"ruin_orphan",name:"秘境遗孤",rarity:"epic",desc:"从一处上古秘境中被捡回的孩子，身上带着说不清的气息。",stats:{comprehension:68,physique:55,luck:45,charm:50,family:5,wealth:20,reputation:5,morality:55,lifespan:85},location:"village",resources:{gold:10,item:"秘境碎片"},relations:["养父"],flags:["mystery_aura"]},
+ {id:"god_reincarn",name:"神位转世",rarity:"legend",desc:"某位陨落神祇的转世之身，灵魂深处沉睡着古老的权能。",stats:{comprehension:80,physique:65,luck:70,charm:65,family:20,wealth:30,reputation:5,morality:60,lifespan:100},location:"village",resources:{gold:30,item:"神祇残念"},flags:["god_reincarn"]},
+ {id:"ancient_blood",name:"上古血脉",rarity:"legend",desc:"体内流淌着上古异兽的血脉，觉醒时必将震惊大陆。",stats:{comprehension:65,physique:85,luck:55,charm:55,family:30,wealth:40,reputation:10,morality:50,lifespan:95},location:"village",resources:{gold:50,item:"血脉晶石"},flags:["ancient_blood"]},
+ {id:"twin_soul",name:"双生武魂预兆",rarity:"legend",desc:"觉醒时竟有两道武魂虚影浮现，这是万中无一的征兆。",stats:{comprehension:78,physique:60,luck:65,charm:60,family:25,wealth:35,reputation:8,morality:58,lifespan:90},location:"village",resources:{gold:40},flags:["twin_soul"]},
+ {id:"chosen",name:"位面之子",rarity:"legend",desc:"气运加身，逢凶化吉，仿佛整个世界都在眷顾你。",stats:{comprehension:70,physique:68,luck:95,charm:72,family:30,wealth:50,reputation:15,morality:65,lifespan:95},location:"town",resources:{gold:80,item:"幸运符"},flags:["chosen"]},
+ {id:"transmig",name:"穿越者",rarity:"hidden",desc:"你来自另一个世界，带着不属于这里的记忆与知识。",stats:{comprehension:88,physique:45,luck:60,charm:55,family:0,wealth:10,reputation:0,morality:55,lifespan:80},location:"village",resources:{gold:15,item:"异世手记"},flags:["transmig"]},
+ {id:"god_fragment",name:"神祇残魂",rarity:"hidden",desc:"你并非完整的人，而是一缕神祇残魂寄身于凡胎。",stats:{comprehension:85,physique:50,luck:50,charm:60,family:0,wealth:20,reputation:0,morality:40,lifespan:120},location:"ruin",resources:{gold:20,item:"残魂核心"},flags:["god_fragment"]},
+ {id:"demon_seed",name:"魔种寄生",rarity:"hidden",desc:"体内被植入了一颗魔种，力量与疯狂一同生长。",stats:{comprehension:70,physique:80,luck:35,charm:45,family:0,wealth:15,reputation:0,morality:30,lifespan:70},location:"forest_edge",resources:{gold:10,item:"魔种印记"},flags:["demon_seed"]}
+];
+
+/* ---- 随机词条 (36) ---- */
+const TRAITS=[
+ //天赋
+ {id:"precocious",name:"早慧",type:"天赋",desc:"六岁便有成人心智，悟性远超同龄。",stats:{comprehension:15},weights:{study:1.3}},
+ {id:"strength",name:"天生神力",type:"天赋",desc:"三岁能举鼎，体魄天生强横。",stats:{physique:20},weights:{battle:1.3}},
+ {id:"soul_affinity",name:"魂力亲和",type:"天赋",desc:"对天地魂力格外敏感，修炼事半功倍。",stats:{comprehension:8,soulGain:1.3},weights:{cultivate:1.4}},
+ {id:"insight",name:"悟性极佳",type:"天赋",desc:"一点就透，一学就会，堪称奇才。",stats:{comprehension:18},weights:{study:1.4}},
+ {id:"agile",name:"身轻如燕",type:"天赋",desc:"动作迅捷，身法灵动。",stats:{physique:5,speedBonus:10},weights:{battle:1.1}},
+ {id:"lucky",name:"鸿运当头",type:"天赋",desc:"运气好得不像话。",stats:{luck:25},weights:{rare_event:1.5}},
+ //身世
+ {id:"blood_feud",name:"家族血仇",type:"身世",desc:"家族被灭，仇恨的火焰在胸中燃烧。",stats:{morality:-10},weights:{revenge:2.0},flags:["blood_feud"]},
+ {id:"adopted",name:"被收养",type:"身世",desc:"养父母待你如己出，身世成谜。",stats:{charm:5,family:10},weights:{mystery:1.3}},
+ {id:"amulet",name:"遗物护符",type:"身世",desc:"父母留下的护符，关键时刻能挡一劫。",stats:{luck:8},items:["护符"],weights:{save_life:1.5}},
+ {id:"parents_missing",name:"父母失踪",type:"身世",desc:"父母在你幼年时神秘失踪，只留下一串线索。",stats:{morality:5},weights:{mystery:1.8},flags:["parents_missing"]},
+ {id:"orphan",name:"孤儿",type:"身世",desc:"无父无母，在世间独自挣扎。",stats:{physique:8,wealth:-10},weights:{hardship:1.5}},
+ {id:"rich_uncle",name:"富商远亲",type:"身世",desc:"有个富得流油的远亲偶尔接济。",stats:{wealth:30,family:10}},
+ //命运
+ {id:"prophecy",name:"被预言之人",type:"命运",desc:"先知曾预言你的命运，或救世或灭世。",stats:{luck:10,reputation:10},weights:{main_quest:2.0},flags:["prophecy"]},
+ {id:"doom",name:"厄运缠身",type:"命运",desc:"霉运如影随形，但绝境中也藏着机遇。",stats:{luck:-20},weights:{crisis:1.8,rare_event:1.3},flags:["doom"]},
+ {id:"benefactor",name:"贵人相助",type:"命运",desc:"生命中总有贵人在关键时刻出现。",stats:{luck:15,charm:5},weights:{benefactor:2.0}},
+ {id:"rival",name:"宿敌存在",type:"命运",desc:"有一个与你旗鼓相当的宿敌，亦敌亦友。",stats:{comprehension:5},weights:{rival:2.0},flags:["has_rival"]},
+ {id:"cursed",name:"诅咒之体",type:"命运",desc:"身上带着古老诅咒，力量越强代价越大。",stats:{physique:-10,comprehension:10},weights:{dark:1.5},flags:["cursed"]},
+ {id:"blessed",name:"光明庇佑",type:"命运",desc:"被光明之力眷顾，邪祟难侵。",stats:{morality:15,luck:8},weights:{light:1.5}},
+ //性格
+ {id:"loner",name:"孤僻",type:"性格",desc:"不喜与人交往，却更能专注自身。",stats:{comprehension:8,charm:-10},weights:{solo:1.5}},
+ {id:"kind",name:"善良",type:"性格",desc:"心怀慈悲，乐于助人。",stats:{morality:20,charm:8},weights:{kind:1.5}},
+ {id:"ambition",name:"野心勃勃",type:"性格",desc:"不甘人下，誓要登顶。",stats:{morality:-5,reputation:5},weights:{ambition:1.8}},
+ {id:"justice",name:"正义凛然",type:"性格",desc:"眼里揉不得沙子，路见不平必出手。",stats:{morality:20,reputation:8},weights:{justice:1.5}},
+ {id:"cunning",name:"狡诈",type:"性格",desc:"诡计多端，善于利用人心。",stats:{comprehension:8,morality:-10,charm:5},weights:{scheme:1.5}},
+ {id:"brave",name:"英勇无畏",type:"性格",desc:"面对强敌从不退缩。",stats:{physique:8,morality:5},weights:{battle:1.3}},
+ //特殊
+ {id:"companion_beast",name:"伴生魂兽",type:"特殊",desc:"出生时便有一只魂兽伴你左右。",stats:{},special:"companion",weights:{beast_event:1.5}},
+ {id:"mystery_map",name:"神秘地图",type:"特殊",desc:"一张古老地图，标注着未知秘境。",items:["神秘地图"],weights:{explore:1.8},flags:["mystery_map"]},
+ {id:"ancient_book",name:"古书残卷",type:"特殊",desc:"残缺的古书，记载着失传的功法。",items:["古书残卷"],stats:{comprehension:5},weights:{study:1.5}},
+ {id:"strange_fire",name:"异火种子",type:"特殊",desc:"体内孕育着一缕异火，可炼药可攻敌。",stats:{physique:5},items:["异火种子"],weights:{fire:1.5},flags:["strange_fire"]},
+ {id:"spirit_ring",name:"先天魂环",type:"特殊",desc:"觉醒时自带一枚百年魂环，震惊四座。",stats:{reputation:15},special:"innate_ring",weights:{rare_event:1.3}},
+ {id:"dual_personality",name:"双重人格",type:"特殊",desc:"体内还有另一个人格，时而出现。",stats:{comprehension:10,morality:-5},weights:{dark:1.3},flags:["dual_personality"]},
+ {id:"phoenix_blood",name:"凤凰血脉",type:"特殊",desc:"传说中的凤凰血脉，浴火可以重生。",stats:{physique:10,luck:10,lifespan:10},flags:["phoenix"]},
+ {id:"void_body",name:"虚空之体",type:"特殊",desc:"身体与虚空有微妙联系，可短距离瞬移。",stats:{speedBonus:15,comprehension:5},flags:["void_body"]},
+ {id:"saint_essence",name:"先天圣体",type:"特殊",desc:"先天圣体，修炼任何功法都事半功倍。",stats:{comprehension:12,physique:8,soulGain:1.2},flags:["saint_essence"]},
+ {id:"death_eye",name:"死亡之瞳",type:"特殊",desc:"双眼能看见死亡的线，凝视即可削弱敌人。",stats:{comprehension:8},special:"death_eye",weights:{battle:1.2},flags:["death_eye"]},
+ {id:"time_shard",name:"时光碎片",type:"特殊",desc:"一块时光碎片，偶尔让你瞥见未来的片段。",stats:{luck:12},items:["时光碎片"],weights:{rare_event:1.4},flags:["time_shard"]},
+ {id:"beast_tongue",name:"兽语者",type:"特殊",desc:"能与魂兽沟通，收服它们更加容易。",stats:{charm:5},special:"beast_tongue",weights:{beast_event:1.8},flags:["beast_tongue"]}
+];
+
+/* ---- 伙伴种族 (18) ---- */
+const SPECIES=[
+ {id:"bluegrass",name:"蓝银草",types:["植物","控制"],base:{hp:45,atk:40,def:55,spd:30,soul:60},skills:["缠绕","麻痹粉","魂力吸取","蓝银囚笼"],catch:80,locs:["village","forest_edge","forest"],desc:"最常见的植物系武魂，生命力顽强，控制能力出色。",trait:["再生"]},
+ {id:"ghostcat",name:"幽冥灵猫",types:["敏攻","黑暗"],base:{hp:40,atk:65,def:35,spd:90,soul:50},skills:["幽冥百爪","影分身","黑暗突袭","幽冥斩"],catch:45,locs:["forest","city","ruin"],desc:"敏捷至极的暗属性魂兽，一击远遁。",trait:["夜行"]},
+ {id:"whitetiger",name:"白虎",types:["强攻","兽"],base:{hp:70,atk:80,def:60,spd:55,soul:45},skills:["白虎烈光波","虎啸","金刚爪","白虎流星雨"],catch:25,locs:["forest","mountain"],evolve:{to:"whitetiger_king",level:30},desc:"百兽之王的幼体，威风凛凛。",trait:["威吓"]},
+ {id:"softrabbit",name:"柔骨兔",types:["敏攻","辅助"],base:{hp:50,atk:45,def:40,spd:85,soul:55},skills:["腰弓","瞬间移动","柔骨锁","魅力"],catch:70,locs:["village","forest_edge"],desc:"看似柔弱，实则爆发力惊人。",trait:["可爱"]},
+ {id:"firephoenix",name:"火凤凰",types:["元素","强攻"],base:{hp:60,atk:85,def:45,spd:70,soul:75},skills:["凤凰火线","浴火","凤凰流星雨","涅槃"],catch:10,locs:["mountain","ruin"],evolve:{to:"divine_phoenix",level:40,item:"凤凰血"},desc:"传说中的神鸟幼体，火焰的化身。",trait:["烈焰"]},
+ {id:"blackturtle",name:"玄武",types:["防御","辅助"],base:{hp:95,atk:40,def:90,spd:20,soul:60},skills:["玄武盾","水炮","龟息","玄武大地震"],catch:20,locs:["forest_edge","mountain"],desc:"四灵之一的玄武，防御无双。",trait:["坚甲"]},
+ {id:"thundereagle",name:"雷鹰",types:["敏攻","元素"],base:{hp:50,atk:70,def:40,spd:95,soul:65},skills:["雷击","闪电突袭","雷暴","千鸟"],catch:30,locs:["mountain","city"],desc:"翱翔天际的雷属性猛禽。",trait:["迅捷"]},
+ {id:"poisonspider",name:"毒蛛",types:["控制","黑暗"],base:{hp:55,atk:60,def:45,spd:60,soul:70},skills:["毒网","剧毒咬","蛛丝束缚","万毒朝宗"],catch:50,locs:["forest","ruin"],desc:"剧毒的蜘蛛，防不胜防。",trait:["剧毒"]},
+ {id:"stonegolem",name:"石巨人",types:["防御","强攻"],base:{hp:100,atk:65,def:95,spd:15,soul:30},skills:["岩石炮","地震","石化","巨石碎击"],catch:35,locs:["mountain","ruin"],desc:"由岩石构成的巨人，力大无穷。",trait:["坚硬"]},
+ {id:"lightunicorn",name:"光明独角兽",types:["光明","辅助"],base:{hp:65,atk:55,def:55,spd:75,soul:85},skills:["圣光","治愈","光明冲击","神圣审判"],catch:15,locs:["forest","mountain","temple"],desc:"纯洁的光明生物，能治愈伤痛。",trait:["圣洁"]},
+ {id:"shadowwolf",name:"暗影狼",types:["黑暗","敏攻"],base:{hp:55,atk:70,def:40,spd:85,soul:50},skills:["暗影撕咬","狼嚎","暗影分身","月夜突袭"],catch:55,locs:["forest_edge","forest","ruin"],desc:"群居的暗影生物，凶狠狡诈。",trait:["暗袭"]},
+ {id:"vinefiend",name:"藤蔓妖",types:["植物","控制"],base:{hp:70,atk:50,def:60,spd:25,soul:70},skills:["藤蔓缠绕","种子炸弹","花粉迷醉","生命汲取"],catch:60,locs:["forest","forest_edge"],desc:"古老的植物精怪，控制欲极强。",trait:["再生"]},
+ {id:"icebutterfly",name:"冰晶蝶",types:["元素","控制"],base:{hp:45,atk:60,def:40,spd:80,soul:75},skills:["冰锥","冰冻光线","暴风雪","绝对零度"],catch:40,locs:["mountain","forest"],desc:"优雅的冰属性蝴蝶，美丽而危险。",trait:["冰冻"]},
+ {id:"golddragon",name:"黄金龙",types:["强攻","兽"],base:{hp:90,atk:95,def:75,spd:60,soul:70},skills:["龙息","龙威","黄金龙爪","龙神之怒"],catch:5,locs:["ruin","mountain"],evolve:{to:"divine_dragon",level:50},desc:"龙族中的王者，黄金之色代表至尊。",trait:["龙威"]},
+ {id:"nethercrow",name:"九幽雀",types:["黑暗","元素"],base:{hp:55,atk:75,def:40,spd:88,soul:80},skills:["幽冥火","死亡凝视","九幽风暴","涅槃重生"],catch:18,locs:["ruin","forest"],desc:"来自九幽的神雀，死亡与重生的象征。",trait:["幽冥"]},
+ {id:"facespider",name:"人面魔蛛",types:["黑暗","控制"],base:{hp:60,atk:80,def:50,spd:70,soul:65},skills:["蛛丝","剧毒","人面噬","蛛网天罗"],catch:22,locs:["forest","ruin"],desc:"极其凶残的魔蛛，脸上长着人面。",trait:["凶残"]},
+ {id:"titangorilla",name:"泰坦巨猿",types:["强攻","兽"],base:{hp:110,atk:100,def:80,spd:35,soul:45},skills:["泰坦重拳","重力压制","巨猿咆哮","天地破"],catch:8,locs:["forest","mountain"],desc:"森林中的霸主，力量堪比神兽。",trait:["蛮力"]},
+ {id:"seaserpent",name:"海魂蛇",types:["元素","控制"],base:{hp:65,atk:65,def:55,spd:55,soul:75},skills:["水龙卷","毒液","深海缠绕","海神之怒"],catch:38,locs:["forest_edge","city"],desc:"水域中的霸主，掌控水流。",trait:["水性"]}
+];
+
+/* ---- 技能 (55) ---- */
+const SKILLS={
+ "缠绕":{type:"植物",power:35,acc:95,pp:20,effect:{status:"束缚",chance:.3},desc:"用藤蔓缠绕对手"},
+ "麻痹粉":{type:"植物",power:0,acc:90,pp:15,effect:{status:"麻痹",chance:.6},desc:"撒出麻痹粉末"},
+ "魂力吸取":{type:"控制",power:40,acc:100,pp:15,effect:{drain:.5},desc:"吸取对手魂力"},
+ "蓝银囚笼":{type:"植物",power:60,acc:85,pp:10,effect:{status:"束缚",chance:.5},desc:"召唤蓝银草形成囚笼"},
+ "幽冥百爪":{type:"敏攻",power:45,acc:95,pp:20,effect:{multi:2},desc:"高速连续爪击"},
+ "影分身":{type:"黑暗",power:0,acc:100,pp:10,effect:{buff:"闪避",turns:2},desc:"制造分身提升闪避"},
+ "黑暗突袭":{type:"黑暗",power:70,acc:90,pp:10,effect:{status:"恐惧",chance:.2},desc:"从暗影中突袭"},
+ "幽冥斩":{type:"黑暗",power:90,acc:80,pp:5,desc:"幽冥之力的斩击"},
+ "白虎烈光波":{type:"强攻",power:80,acc:90,pp:10,effect:{status:"虚弱",chance:.3},desc:"白虎的强力光波"},
+ "虎啸":{type:"兽",power:0,acc:100,pp:10,effect:{debuff:"攻击",turns:3},desc:"虎啸降低对手攻击"},
+ "金刚爪":{type:"强攻",power:55,acc:95,pp:15,desc:"坚硬如金刚的爪击"},
+ "白虎流星雨":{type:"强攻",power:100,acc:75,pp:5,effect:{multi:3},desc:"召唤流星般的攻击"},
+ "腰弓":{type:"敏攻",power:40,acc:95,pp:20,effect:{buff:"攻击",turns:2},desc:"腰力爆发提升攻击"},
+ "瞬间移动":{type:"辅助",power:0,acc:100,pp:10,effect:{buff:"闪避",turns:1},desc:"短距离瞬移"},
+ "柔骨锁":{type:"控制",power:50,acc:90,pp:10,effect:{status:"束缚",chance:.6},desc:"柔骨锁住对手"},
+ "魅力":{type:"辅助",power:0,acc:85,pp:10,effect:{status:"魅惑",chance:.5},desc:"魅惑对手"},
+ "凤凰火线":{type:"元素",power:75,acc:90,pp:10,effect:{status:"灼烧",chance:.4},desc:"凤凰的火焰线"},
+ "浴火":{type:"元素",power:0,acc:100,pp:5,effect:{heal:.3,buff:"攻击",turns:3},desc:"浴火重生恢复并强化"},
+ "凤凰流星雨":{type:"元素",power:110,acc:70,pp:5,effect:{status:"灼烧",chance:.5},desc:"火焰流星从天而降"},
+ "涅槃":{type:"元素",power:0,acc:100,pp:1,effect:{revive:.5},desc:"死亡时复活一次"},
+ "玄武盾":{type:"防御",power:0,acc:100,pp:10,effect:{buff:"防御",turns:3},desc:"召唤玄武之盾"},
+ "水炮":{type:"元素",power:65,acc:90,pp:15,desc:"高压水炮攻击"},
+ "龟息":{type:"辅助",power:0,acc:100,pp:10,effect:{heal:.25},desc:"龟息大法恢复生命"},
+ "玄武大地震":{type:"防御",power:95,acc:80,pp:5,effect:{status:"眩晕",chance:.3},desc:"引发大地震"},
+ "雷击":{type:"元素",power:60,acc:95,pp:15,effect:{status:"麻痹",chance:.3},desc:"召唤雷电"},
+ "闪电突袭":{type:"敏攻",power:70,acc:95,pp:10,effect:{priority:1},desc:"先制的闪电突袭"},
+ "雷暴":{type:"元素",power:90,acc:80,pp:5,effect:{status:"麻痹",chance:.4},desc:"大范围雷暴"},
+ "千鸟":{type:"元素",power:100,acc:75,pp:5,desc:"千鸟齐鸣的雷之极限"},
+ "毒网":{type:"控制",power:45,acc:90,pp:15,effect:{status:"中毒",chance:.6},desc:"吐出毒网"},
+ "剧毒咬":{type:"黑暗",power:55,acc:95,pp:15,effect:{status:"中毒",chance:.7},desc:"带毒的撕咬"},
+ "蛛丝束缚":{type:"控制",power:40,acc:95,pp:20,effect:{status:"束缚",chance:.5},desc:"蛛丝缠住对手"},
+ "万毒朝宗":{type:"黑暗",power:100,acc:70,pp:5,effect:{status:"中毒",chance:.9},desc:"万毒汇聚的终极一击"},
+ "岩石炮":{type:"强攻",power:80,acc:85,pp:10,desc:"发射岩石炮弹"},
+ "地震":{type:"强攻",power:90,acc:85,pp:5,effect:{status:"眩晕",chance:.2},desc:"引发地震"},
+ "石化":{type:"控制",power:0,acc:80,pp:10,effect:{status:"石化",chance:.4},desc:"将对手石化"},
+ "巨石碎击":{type:"强攻",power:110,acc:70,pp:5,desc:"举起巨石砸下"},
+ "圣光":{type:"光明",power:0,acc:100,pp:10,effect:{heal:.3},desc:"圣光治愈"},
+ "治愈":{type:"辅助",power:0,acc:100,pp:15,effect:{heal:.4},desc:"治愈伤口"},
+ "光明冲击":{type:"光明",power:70,acc:95,pp:10,effect:{status:"虚弱",chance:.3},desc:"光明能量冲击"},
+ "神圣审判":{type:"光明",power:110,acc:75,pp:5,effect:{status:"眩晕",chance:.3},desc:"神圣的审判之光"},
+ "暗影撕咬":{type:"黑暗",power:60,acc:95,pp:15,effect:{status:"恐惧",chance:.2},desc:"暗影中的撕咬"},
+ "狼嚎":{type:"兽",power:0,acc:100,pp:10,effect:{buff:"攻击",turns:3},desc:"狼嚎提升攻击"},
+ "暗影分身":{type:"黑暗",power:0,acc:100,pp:8,effect:{buff:"闪避",turns:2},desc:"暗影分身"},
+ "月夜突袭":{type:"黑暗",power:85,acc:90,pp:8,effect:{crit:.3},desc:"月夜下的突袭"},
+ "藤蔓缠绕":{type:"植物",power:45,acc:95,pp:20,effect:{status:"束缚",chance:.4},desc:"藤蔓缠绕"},
+ "种子炸弹":{type:"植物",power:70,acc:85,pp:10,effect:{status:"灼烧",chance:.3},desc:"种子爆炸"},
+ "花粉迷醉":{type:"植物",power:0,acc:85,pp:10,effect:{status:"魅惑",chance:.5},desc:"迷醉的花粉"},
+ "生命汲取":{type:"植物",power:55,acc:100,pp:10,effect:{drain:.6},desc:"汲取生命"},
+ "冰锥":{type:"元素",power:55,acc:95,pp:15,effect:{status:"冰冻",chance:.2},desc:"冰锥射击"},
+ "冰冻光线":{type:"元素",power:70,acc:90,pp:10,effect:{status:"冰冻",chance:.35},desc:"冰冻光线"},
+ "暴风雪":{type:"元素",power:90,acc:80,pp:5,effect:{status:"冰冻",chance:.4},desc:"召唤暴风雪"},
+ "绝对零度":{type:"元素",power:120,acc:65,pp:3,effect:{status:"冰冻",chance:.6},desc:"绝对零度的恐怖"},
+ "龙息":{type:"强攻",power:85,acc:90,pp:10,effect:{status:"灼烧",chance:.3},desc:"龙的吐息"},
+ "龙威":{type:"兽",power:0,acc:100,pp:8,effect:{debuff:"全属性",turns:2},desc:"龙威压制"},
+ "黄金龙爪":{type:"强攻",power:100,acc:85,pp:5,desc:"黄金色的龙爪"},
+ "龙神之怒":{type:"强攻",power:130,acc:65,pp:3,effect:{status:"眩晕",chance:.4},desc:"龙神的愤怒"},
+ "普通攻击":{type:"强攻",power:30,acc:100,pp:99,desc:"普通攻击"}
+};
+
+/* ---- 进化形态 ---- */
+const EVOLUTIONS={
+ whitetiger_king:{name:"白虎之王",types:["强攻","兽"],base:{hp:95,atk:105,def:75,spd:65,soul:55},skills:["白虎烈光波","虎啸","金刚爪","白虎流星雨"],desc:"白虎进化后的王者形态。"},
+ divine_phoenix:{name:"神凤凰",types:["元素","光明"],base:{hp:85,atk:110,def:60,spd:85,soul:100},skills:["凤凰火线","浴火","凤凰流星雨","涅槃"],desc:"涅槃后的神凤凰，接近神级。"},
+ divine_dragon:{name:"神龙",types:["强攻","光明"],base:{hp:120,atk:120,def:90,spd:75,soul:90},skills:["龙息","龙威","黄金龙爪","龙神之怒"],desc:"黄金龙进化为神龙。"}
+};
+
+/* ---- 地点 (12) ---- */
+const LOCATIONS={
+ village:{name:"圣魂村",desc:"宁静的小山村，故事开始的地方。",shop:["草药","干粮","普通契约器"],enc:["bluegrass","softrabbit"]},
+ town:{name:"索托城",desc:"繁华的城镇，三教九流汇聚。",shop:["草药","干粮","普通契约器","精良契约器","魂导器"],enc:["softrabbit","shadowwolf"]},
+ academy:{name:"史莱克学院",desc:"只收怪物的学院，天才的摇篮。",shop:["精良契约器","丹药","书籍"],enc:[]},
+ sect:{name:"七大宗门",desc:"大陆顶尖宗门的所在。",shop:["精良契约器","史诗契约器","丹药","魂骨"],enc:[]},
+ city:{name:"天斗皇城",desc:"天斗帝国的首都，权力的中心。",shop:["精良契约器","史诗契约器","魂导器","丹药","魂骨"],enc:["ghostcat","thundereagle"]},
+ forest_edge:{name:"星斗森林边缘",desc:"星斗大森林的外围，低阶魂兽出没。",shop:["干粮","普通契约器"],enc:["bluegrass","softrabbit","shadowwolf","poisonspider","vinefiend","seaserpent"]},
+ forest:{name:"星斗大森林",desc:"魂兽的天堂，也是魂师的墓地。",shop:[],enc:["ghostcat","whitetiger","poisonspider","vinefiend","icebutterfly","facespider","nethercrow","titangorilla"]},
+ mountain:{name:"落日山脉",desc:"险峻的山脉，藏着无数天材地宝。",shop:[],enc:["whitetiger","blackturtle","thundereagle","stonegolem","firephoenix","golddragon","titangorilla"]},
+ temple:{name:"武魂殿",desc:"大陆最强大的势力，教皇的居所。",shop:["史诗契约器","丹药","魂骨","魂导器"],enc:["lightunicorn"]},
+ ruin:{name:"上古秘境",desc:"上古文明的遗迹，危险与机遇并存。",shop:[],enc:["ghostcat","poisonspider","stonegolem","firephoenix","nethercrow","facespider","golddragon","lightunicorn"]},
+ battlefield:{name:"古战场",desc:"昔日的战场，亡魂不散。",shop:[],enc:["shadowwolf","nethercrow","stonegolem"]}
+};
+
+/* ---- 道具 ---- */
+const ITEMS={
+ "草药":{type:"consumable",desc:"恢复少量生命",effect:{heal:30},price:20},
+ "干粮":{type:"consumable",desc:"恢复心情和疲劳",effect:{mood:20,fatigue:-20},price:10},
+ "普通契约器":{type:"ball",desc:"捕捉野生魂兽",catch:1.0,price:50},
+ "精良契约器":{type:"ball",desc:"捕捉率提升",catch:1.5,price:200},
+ "史诗契约器":{type:"ball",desc:"捕捉率大幅提升",catch:2.5,price:800},
+ "丹药":{type:"consumable",desc:"恢复全部生命",effect:{heal:999},price:100},
+ "魂导器":{type:"equip",desc:"提升攻击力",effect:{atk:10},price:500},
+ "防具":{type:"equip",desc:"提升防御力",effect:{def:10},price:400},
+ "饰品":{type:"equip",desc:"提升魂力",effect:{soul:10},price:450},
+ "凤凰血":{type:"special",desc:"凤凰进化道具",price:0},
+ "护符":{type:"special",desc:"挡一次致命伤害",price:0},
+ "铁锤":{type:"equip",desc:"铁匠的锤子",effect:{atk:5},price:0},
+ "短弓":{type:"equip",desc:"猎人的弓",effect:{atk:8},price:0},
+ "飞刀":{type:"equip",desc:"艺人的飞刀",effect:{atk:6},price:0},
+ "猎魂刀":{type:"equip",desc:"猎魂团的刀",effect:{atk:12},price:0}
+};
+
+/* 魂环年份 */
+const RING_YEARS=[{name:"十年",mult:1,color:"#fff"},{name:"百年",mult:1.5,color:"#f4d77a"},{name:"千年",mult:2.5,color:"#c77dff"},{name:"万年",mult:4,color:"#ff4d4d"},{name:"十万年",mult:7,color:"#ff0000"}];
+
+/* ---- 事件 (85) ---- */
+const EVENTS=[
+ // === 修炼奇遇 ===
+ {id:"cultivate_1",type:"修炼奇遇",weight:10,text:"你在修炼中忽然感受到天地魂力的共鸣，魂力运转速度大增。",opts:[{text:"全力吸收",result:{soulExp:20,fatigue:15}},{text:"稳步吸收",result:{soulExp:10}}]},
+ {id:"cultivate_2",type:"修炼奇遇",weight:8,text:"一处隐秘的山洞中散发着浓郁的魂力波动。",opts:[{text:"进入探索",result:{soulExp:15,item:"丹药",flag:"found_cave"}},{text:"谨慎离开",result:{}}]},
+ {id:"cultivate_3",type:"修炼奇遇",weight:7,text:"你在冥想中看到了过去的自己，心境有所突破。",opts:[{text:"继续冥想",result:{comprehension:3,soulExp:10}},{text:"醒来",result:{mood:10}}]},
+ {id:"cultivate_4",type:"修炼奇遇",weight:6,text:"一本破旧的功法被你偶然得到，上面记载着奇特的修炼之法。",opts:[{text:"修炼此法",result:{soulExp:25,comprehension:2,flag:"odd_skill"}},{text:"卖掉",result:{gold:100}}]},
+ {id:"cultivate_5",type:"修炼奇遇",weight:5,text:"瀑布下的水潭蕴含着特殊的水属性魂力。",opts:[{text:"在瀑布下修炼",result:{physique:3,soulExp:15,fatigue:20}},{text:"离开",result:{}}]},
+ {id:"cultivate_6",type:"修炼奇遇",weight:5,text:"雷雨天，你感受到雷元素格外活跃。",opts:[{text:"引雷入体",result:{soulExp:30,hp:-20,flag:"thunder_body"}},{text:"躲避",result:{}}]},
+ {id:"cultivate_7",type:"修炼奇遇",weight:4,text:"你发现自己的武魂似乎有了细微的变化。",opts:[{text:"仔细研究",result:{soulExp:20,flag:"soul_evolve_hint"}},{text:"忽略",result:{}}]},
+ {id:"cultivate_8",type:"修炼奇遇",weight:4,text:"一位云游的老者指点了你几句，令你茅塞顿开。",opts:[{text:"虚心受教",result:{comprehension:5,soulExp:15}},{text:"不以为然",result:{}}]},
+ {id:"cultivate_9",type:"修炼奇遇",weight:3,text:"你在梦中学会了一招奇特的魂技。",opts:[{text:"醒来后练习",result:{skill:"随机",soulExp:10}},{text:"忘记它",result:{}}]},
+ {id:"cultivate_10",type:"修炼奇遇",weight:3,text:"体内的魂力忽然失控，在经脉中乱冲。",opts:[{text:"强行压制",result:{soulExp:5,hp:-30}},{text:"顺势引导",result:{soulExp:25,comprehension:2}}]},
+ // === 野外遭遇 ===
+ {id:"wild_1",type:"野外遭遇",weight:10,text:"一只野生魂兽挡住了你的去路，看起来不太友善。",opts:[{text:"战斗",result:{battle:"random"}},{text:"尝试收服",result:{catch:"random"}},{text:"绕路",result:{}}]},
+ {id:"wild_2",type:"野外遭遇",weight:8,text:"你发现了一只受伤的魂兽，它虚弱地看着你。",opts:[{text:"救助它",result:{mood:15,companion:"random_weak",flag:"saved_beast"}},{text:"趁机收服",result:{catch:"weak"}},{text:"离开",result:{}}]},
+ {id:"wild_3",type:"野外遭遇",weight:7,text:"一群魂兽将你包围了！",opts:[{text:"奋力战斗",result:{battle:"group"}},{text:"使用道具突围",result:{item:"消耗",gold:-50}},{text:"装死",result:{luck_check:true}}]},
+ {id:"wild_4",type:"野外遭遇",weight:6,text:"你发现了一枚魂兽蛋，似乎快要孵化了。",opts:[{text:"带走孵化",result:{companion:"egg",flag:"hatched"}},{text:"留在原地",result:{}}]},
+ {id:"wild_5",type:"野外遭遇",weight:5,text:"一株千年灵药在眼前散发着光芒。",opts:[{text:"采摘",result:{item:"丹药",soulExp:10}},{text:"守护它",result:{mood:10,flag:"guard_herb"}}]},
+ {id:"wild_6",type:"野外遭遇",weight:5,text:"一只极其罕见的魂兽出现了！",opts:[{text:"全力收服",result:{catch:"rare"}},{text:"战斗",result:{battle:"rare"}},{text:"记录后离开",result:{codex:"rare"}}]},
+ {id:"wild_7",type:"野外遭遇",weight:4,text:"你误入了魂兽的领地，首领发出了警告的咆哮。",opts:[{text:"道歉后退",result:{}},{text:"挑战首领",result:{battle:"boss"}},{text:"用食物安抚",result:{gold:-30,companion:"chance"}}]},
+ {id:"wild_8",type:"野外遭遇",weight:4,text:"地上有一块闪闪发光的魂骨。",opts:[{text:"拾取",result:{item:"魂骨",flag:"found_bone"}},{text:"警惕地检查",result:{item:"魂骨",hp:-10}}]},
+ // === 社交事件 ===
+ {id:"social_1",type:"社交事件",weight:10,text:"你在酒馆中遇到了一个有趣的陌生人。",opts:[{text:"攀谈",result:{npc:"random",mood:10}},{text:"喝酒",result:{mood:15,gold:-20,fatigue:-10}},{text:"离开",result:{}}]},
+ {id:"social_2",type:"社交事件",weight:8,text:"一位同门师兄弟邀请你一起修炼。",opts:[{text:"答应",result:{soulExp:10,npc:"friend",fatigue:10}},{text:"拒绝",result:{}}]},
+ {id:"social_3",type:"社交事件",weight:7,text:"集市上有人在叫卖一件奇特的物品。",opts:[{text:"购买",result:{gold:-80,item:"随机"}},{text:"砍价",result:{gold:-50,item:"随机",luck_check:true}},{text:"不买",result:{}}]},
+ {id:"social_4",type:"社交事件",weight:6,text:"你帮助了一位迷路的老人，他似乎不是普通人。",opts:[{text:"送他回家",result:{rep:{random:5},item:"随机",flag:"helped_elder"}},{text:"指路后离开",result:{mood:5}}]},
+ {id:"social_5",type:"社交事件",weight:5,text:"一个孩子缠着你要看你的武魂。",opts:[{text:"展示给他看",result:{mood:10,reputation:3}},{text:"拒绝",result:{mood:-5}}]},
+ {id:"social_6",type:"社交事件",weight:5,text:"你被邀请参加一场魂师聚会。",opts:[{text:"参加",result:{reputation:5,npc:"random",mood:10}},{text:"不参加",result:{}}]},
+ {id:"social_7",type:"社交事件",weight:4,text:"有人向你发起了决斗挑战。",opts:[{text:"接受",result:{battle:"duel",reputation:10}},{text:"拒绝",result:{reputation:-5}}]},
+ {id:"social_8",type:"社交事件",weight:4,text:"一位美丽的异性魂师向你请教问题。",opts:[{text:"耐心解答",result:{npc:"lover",charm:2,mood:10}},{text:"敷衍",result:{}}]},
+ // === 危机事件 ===
+ {id:"crisis_1",type:"危机事件",weight:8,text:"一伙山贼拦住了你的去路，索要买路财。",opts:[{text:"给钱",result:{gold:-50}},{text:"战斗",result:{battle:"bandit",reputation:5}},{text:"谈判",result:{charm_check:true,gold:-20}}]},
+ {id:"crisis_2",type:"危机事件",weight:7,text:"你被卷入了一场帮派争斗。",opts:[{text:"帮助一方",result:{rep:{random:10},battle:"gang"}},{text:"中立调停",result:{charm_check:true,reputation:5}},{text:"逃离",result:{fatigue:10}}]},
+ {id:"crisis_3",type:"危机事件",weight:6,text:"一场突如其来的瘟疫席卷了小镇。",opts:[{text:"帮忙救治",result:{mood:15,reputation:10,item:"消耗"},flag:"plague_helped"},{text:"离开小镇",result:{mood:-10}},{text:"炼药出售",result:{gold:200,morality:-10}}]},
+ {id:"crisis_4",type:"危机事件",weight:5,text:"你被人诬陷为窃贼，官府正在通缉你。",opts:[{text:"自首辩解",result:{charm_check:true,reputation:-5}},{text:"找出真凶",result:{flag:"find_thief",reputation:10}},{text:"逃亡",result:{location:"forest",reputation:-10}}]},
+ {id:"crisis_5",type:"危机事件",weight:5,text:"武魂殿的人找上了你，似乎在调查什么。",opts:[{text:"配合调查",result:{rep:{temple:5},flag:"temple_invest"}},{text:"拒绝",result:{rep:{temple:-10}}},{text:"撒谎",result:{morality:-5,rep:{temple:-5}}}]},
+ {id:"crisis_6",type:"危机事件",weight:4,text:"你在野外中了毒，需要尽快找到解药。",opts:[{text:"用魂力压制",result:{hp:-30,soulExp:5}},{text:"寻找解药",result:{item:"草药",flag:"poisoned"}},{text:"运气好自行恢复",result:{luck_check:true}}]},
+ {id:"crisis_7",type:"危机事件",weight:4,text:"一个神秘组织试图拉拢你加入。",opts:[{text:"加入",result:{flag:"join_evil",gold:200,morality:-15}},{text:"拒绝",result:{rep:{evil:-10}}},{text:"假装加入",result:{flag:"infiltrate",morality:-5}}]},
+ // === 经济事件 ===
+ {id:"econ_1",type:"经济事件",weight:10,text:"你找到了一份临时工作。",opts:[{text:"做工",result:{gold:50,fatigue:20}},{text:"不做",result:{}}]},
+ {id:"econ_2",type:"经济事件",weight:8,text:"你发现了一个商机，可以低买高卖。",opts:[{text:"投资",result:{gold:150,luck_check:true}},{text:"不冒险",result:{}}]},
+ {id:"econ_3",type:"经济事件",weight:7,text:"有人委托你护送一批货物。",opts:[{text:"接受",result:{gold:120,battle:"escort",fatigue:15}},{text:"拒绝",result:{}}]},
+ {id:"econ_4",type:"经济事件",weight:6,text:"你锻造/炼药出了一件不错的作品。",opts:[{text:"出售",result:{gold:100}},{text:"留用",result:{item:"随机"}}]},
+ {id:"econ_5",type:"经济事件",weight:5,text:"赌场新开张，邀请你试试手气。",opts:[{text:"小赌",result:{gold:80,luck_check:true}},{text:"大赌",result:{gold:300,luck_check:true}},{text:"不赌",result:{}}]},
+ {id:"econ_6",type:"经济事件",weight:5,text:"你捡到了一个钱包，里面有不少钱。",opts:[{text:"归还失主",result:{mood:10,reputation:5,flag:"honest"}},{text:"据为己有",result:{gold:150,morality:-10}}]},
+ {id:"econ_7",type:"经济事件",weight:4,text:"一位富商愿意高价收购你的魂兽材料。",opts:[{text:"出售",result:{gold:200}},{text:"拒绝",result:{}}]},
+ // === 探索事件 ===
+ {id:"explore_1",type:"探索事件",weight:8,text:"你发现了一条从未走过的小路。",opts:[{text:"探索",result:{location:"random",flag:"new_path"}},{text:"返回",result:{}}]},
+ {id:"explore_2",type:"探索事件",weight:7,text:"一张古老的地图残片指向了某处秘境。",opts:[{text:"前往",result:{location:"ruin",item:"神秘地图"}},{text:"卖掉地图",result:{gold:80}}]},
+ {id:"explore_3",type:"探索事件",weight:6,text:"你在废墟中发现了一个上锁的宝箱。",opts:[{text:"撬开",result:{item:"随机",gold:100}},{text:"找钥匙",result:{flag:"find_key",soulExp:5}}]},
+ {id:"explore_4",type:"探索事件",weight:5,text:"一处悬崖下似乎有东西在闪光。",opts:[{text:"下去查看",result:{item:"魂骨",hp:-20}},{text:"做标记以后再来",result:{flag:"cliff_mark"}}]},
+ {id:"explore_5",type:"探索事件",weight:5,text:"你发现了一个隐藏的武魂修炼室。",opts:[{text:"使用",result:{soulExp:30,fatigue:20}},{text:"离开",result:{}}]},
+ {id:"explore_6",type:"探索事件",weight:4,text:"古老的石碑上刻着神秘的文字。",opts:[{text:"研读",result:{comprehension:5,flag:"ancient_text"}},{text:"拓印带走",result:{item:"古书残卷"}}]},
+ // === 情感事件 ===
+ {id:"emotion_1",type:"情感事件",weight:8,text:"你与一位好友共度了愉快的一天。",opts:[{text:"珍惜时光",result:{mood:20,npc:"friend"}},{text:"修炼",result:{soulExp:5,mood:-5}}]},
+ {id:"emotion_2",type:"情感事件",weight:7,text:"你对某人产生了特殊的感觉。",opts:[{text:"表白",result:{npc:"lover",mood:15,charm_check:true}},{text:"埋在心里",result:{mood:-5}}]},
+ {id:"emotion_3",type:"情感事件",weight:6,text:"你的恋人/伴侣为你准备了惊喜。",opts:[{text:"感动",result:{mood:25}},{text:"觉得浪费钱",result:{mood:-10}}]},
+ {id:"emotion_4",type:"情感事件",weight:5,text:"你与好友发生了争执。",opts:[{text:"道歉",result:{npc:"friend",mood:5}},{text:"坚持己见",result:{mood:-10,npc:"rival"}}]},
+ {id:"emotion_5",type:"情感事件",weight:5,text:"家人来信了，字里行间都是思念。",opts:[{text:"回信",result:{mood:15,family:5}},{text:"忙于修炼",result:{soulExp:5,mood:-5}}]},
+ {id:"emotion_6",type:"情感事件",weight:4,text:"你参加了一位朋友的婚礼。",opts:[{text:"祝福",result:{mood:10,gold:-50}},{text:"送礼",result:{gold:-100,npc:"friend"}}]},
+ // === 隐藏事件 ===
+ {id:"hidden_1",type:"隐藏事件",weight:2,flagReq:"god_reincarn",text:"你在梦中见到了那位神祇，它告诉你一些古老的秘密。",opts:[{text:"聆听",result:{soulExp:50,comprehension:5,flag:"god_hint"}},{text:"拒绝",result:{}}]},
+ {id:"hidden_2",type:"隐藏事件",weight:2,flagReq:"ancient_blood",text:"你的血脉开始觉醒，身体发生了惊人的变化。",opts:[{text:"接受觉醒",result:{physique:10,soulExp:30,flag:"blood_awaken"}},{text:"压制",result:{hp:-20}}]},
+ {id:"hidden_3",type:"隐藏事件",weight:2,flagReq:"twin_soul",text:"你的第二武魂终于完全显现，它的力量令人畏惧。",opts:[{text:"修炼第二武魂",result:{soulExp:40,flag:"second_soul"}},{text:"隐藏它",result:{flag:"hide_soul"}}]},
+ {id:"hidden_4",type:"隐藏事件",weight:2,flagReq:"transmig",text:"你想起了前世的一些知识，这个世界的规则似乎可以被利用。",opts:[{text:"应用知识",result:{comprehension:8,gold:100,flag:"use_modern"}},{text:"隐藏身份",result:{}}]},
+ {id:"hidden_5",type:"隐藏事件",weight:2,flagReq:"demon_seed",text:"魔种在你体内蠢蠢欲动，诱惑你释放它的力量。",opts:[{text:"接受魔种",result:{physique:15,morality:-20,flag:"demon_accept"}},{text:"抵抗",result:{soulExp:20,hp:-15}}]},
+ {id:"hidden_6",type:"隐藏事件",weight:1,flagReq:"mystery_map",text:"你按照神秘地图的指引，找到了一处传说中的秘境。",opts:[{text:"进入",result:{location:"ruin",item:"史诗契约器",flag:"secret_ruin"}},{text:"离开",result:{}}]},
+ {id:"hidden_7",type:"隐藏事件",weight:1,flagReq:"blood_feud",text:"你终于查到了仇人的线索，复仇的机会就在眼前。",opts:[{text:"复仇",result:{battle:"revenge",flag:"revenge_done",morality:-10}},{text:"放下仇恨",result:{mood:20,morality:10,flag:"forgive"}}]},
+ {id:"hidden_8",type:"隐藏事件",weight:1,flagReq:"prophecy",text:"先知再次出现，告诉你预言的真正含义。",opts:[{text:"选择救世",result:{morality:15,reputation:20,flag:"save_world"}},{text:"选择灭世",result:{morality:-30,reputation:-20,flag:"destroy_world"}}]},
+ // === 主线：大陆战争 ===
+ {id:"main_war_1",type:"主线·战争",weight:3,flagReq:"",text:"天斗帝国与星罗帝国的边境冲突加剧，战争的阴云笼罩大陆。",opts:[{text:"加入天斗",result:{rep:{tiandou:20},flag:"war_tiandou"}},{text:"加入星罗",result:{rep:{xingluo:20},flag:"war_xingluo"}},{text:"中立",result:{flag:"war_neutral"}}]},
+ {id:"main_war_2",type:"主线·战争",weight:2,flagReq:"war_tiandou",text:"天斗帝国的将军召见你，分配了一个重要任务。",opts:[{text:"执行任务",result:{battle:"war",rep:{tiandou:15},gold:200}},{text:"推辞",result:{rep:{tiandou:-10}}}]},
+ {id:"main_war_3",type:"主线·战争",weight:2,flagReq:"war_xingluo",text:"星罗帝国的皇帝亲自接见你，赐予你爵位。",opts:[{text:"接受爵位",result:{reputation:30,gold:500,flag:"xingluo_noble"}},{text:"婉拒",result:{rep:{xingluo:5}}}]},
+ {id:"main_war_4",type:"主线·战争",weight:1,flagReq:"war_tiandou",text:"决战之日来临，你站在了战场上。",opts:[{text:"奋勇杀敌",result:{battle:"final_war",reputation:50,flag:"war_hero"}},{text:"指挥若定",result:{comprehension:5,reputation:40,flag:"war_commander"}}]},
+ // === 主线：武魂殿变革 ===
+ {id:"main_temple_1",type:"主线·武魂殿",weight:3,text:"武魂殿的教皇似乎在策划一场惊天的变革。",opts:[{text:"调查真相",result:{flag:"temple_truth",rep:{temple:-5}}},{text:"加入武魂殿",result:{rep:{temple:20},flag:"join_temple"}},{text:"反对武魂殿",result:{rep:{temple:-20},flag:"anti_temple"}}]},
+ {id:"main_temple_2",type:"主线·武魂殿",weight:2,flagReq:"join_temple",text:"教皇赐予你一枚令牌，你成为了武魂殿的核心成员。",opts:[{text:"效忠教皇",result:{rep:{temple:30},gold:300,flag:"pope_loyal"}},{text:"暗中调查",result:{flag:"temple_spy"}}]},
+ {id:"main_temple_3",type:"主线·武魂殿",weight:1,flagReq:"pope_loyal",text:"教皇临终前将武魂殿的未来托付给你。",opts:[{text:"接任殿主",result:{reputation:100,flag:"temple_master"}},{text:"辅佐新主",result:{rep:{temple:20}}}]},
+ // === 主线：星斗森林异动 ===
+ {id:"main_forest_1",type:"主线·森林",weight:3,text:"星斗大森林深处传来异常的魂力波动，魂兽们变得异常暴躁。",opts:[{text:"进入调查",result:{location:"forest",flag:"forest_invest"}},{text:"报告武魂殿",result:{rep:{temple:10}}}]},
+ {id:"main_forest_2",type:"主线·森林",weight:2,flagReq:"forest_invest",text:"你发现森林深处有一道空间裂缝，似乎连接着另一个世界。",opts:[{text:"进入裂缝",result:{flag:"void_rift",hp:-30,soulExp:50}},{text:"封印裂缝",result:{soulExp:30,flag:"seal_rift",reputation:20}}]},
+ {id:"main_forest_3",type:"主线·森林",weight:1,flagReq:"void_rift",text:"裂缝的另一边，你见到了传说中的神兽。",opts:[{text:"沟通",result:{companion:"divine",flag:"divine_encounter"}},{text:"战斗",result:{battle:"divine"}}]},
+ // === 主线：神位传承 ===
+ {id:"main_god_1",type:"主线·神位",weight:2,flagReq:"god_reincarn",text:"你感受到了神位的召唤，传承之地在远方等待着你。",opts:[{text:"前往传承",result:{location:"ruin",flag:"god_trial"}},{text:"暂时放下",result:{}}]},
+ {id:"main_god_2",type:"主线·神位",weight:1,flagReq:"god_trial",text:"神祇的试炼开始了，你必须通过九道考验。",opts:[{text:"接受试炼",result:{battle:"god_trial",soulExp:100,flag:"god_pass"}},{text:"放弃",result:{mood:-20}}]},
+ {id:"main_god_3",type:"主线·神位",weight:1,flagReq:"god_pass",text:"你通过了所有试炼，神位就在眼前。",opts:[{text:"继承神位",result:{flag:"become_god",reputation:200}},{text:"拒绝成神",result:{mood:30,flag:"refuse_god"}}]},
+ // === 主线：家族复仇 ===
+ {id:"main_rev_1",type:"主线·复仇",weight:2,flagReq:"blood_feud",text:"你查到了灭门仇人的下落，他如今已是一方豪强。",opts:[{text:"独自复仇",result:{battle:"revenge_boss",flag:"rev_progress"}},{text:"积蓄力量",result:{soulExp:20,gold:100}}]},
+ {id:"main_rev_2",type:"主线·复仇",weight:1,flagReq:"rev_progress",text:"仇人临死前告诉你，幕后还有更大的黑手。",opts:[{text:"追查到底",result:{flag:"rev_deep",battle:"revenge_final"}},{text:"就此罢手",result:{mood:10,flag:"rev_end"}}]},
+ // === 成长/年龄事件 ===
+ {id:"age_6",type:"成长",weight:5,ageReq:6,text:"六岁了，武魂觉醒的仪式即将开始。",opts:[{text:"参加觉醒",result:{awaken:true,flag:"awakened"}}]},
+ {id:"age_12",type:"成长",weight:5,ageReq:12,text:"你已经是个小大人了，可以选择自己的道路。",opts:[{text:"进入学院",result:{location:"academy",soulExp:20}},{text:"拜师学艺",result:{npc:"master",comprehension:5}},{text:"独自闯荡",result:{location:"town",gold:50}}]},
+ {id:"age_18",type:"成长",weight:5,ageReq:18,text:"你成年了，世界在你面前展开。",opts:[{text:"加入宗门",result:{location:"sect",rep:{sect:10}}},{text:"成为自由魂师",result:{reputation:10,flag:"free_soul"}},{text:"从军",result:{location:"city",rep:{tiandou:10}}}]},
+ {id:"age_30",type:"成长",weight:4,ageReq:30,text:"你已到而立之年，是时候考虑传承了。",opts:[{text:"结婚生子",result:{npc:"spouse",flag:"married",child:true}},{text:"专注修炼",result:{soulExp:30}},{text:"建立势力",result:{gold:-200,flag:"found_faction",reputation:20}}]},
+ {id:"age_50",type:"成长",weight:3,ageReq:50,text:"知天命之年，你开始思考人生的意义。",opts:[{text:"收徒传艺",result:{npc:"disciple",flag:"has_disciple"}},{text:"归隐山林",result:{location:"forest",mood:20}},{text:"继续争霸",result:{reputation:10}}]},
+ {id:"age_70",type:"成长",weight:2,ageReq:70,text:"你已年迈，身体大不如前。",opts:[{text:"将毕生所学传给后代",result:{flag:"legacy",child:"inherit"}},{text:"突破极限",result:{soulExp:50,hp:-30}}]},
+ // === 特殊随机 ===
+ {id:"rand_1",type:"随机",weight:3,text:"你做了一个奇怪的梦，醒来后感觉精神焕发。",opts:[{text:"继续休息",result:{mood:15,fatigue:-30}},{text:"记录梦境",result:{comprehension:2}}]},
+ {id:"rand_2",type:"随机",weight:3,text:"天上掉下来一个东西，正好砸在你面前。",opts:[{text:"查看",result:{item:"随机"}},{text:"躲开",result:{}}]},
+ {id:"rand_3",type:"随机",weight:2,text:"你遇到了一个和你长得一模一样的人。",opts:[{text:"交谈",result:{flag:"doppelganger",comprehension:3}},{text:"逃跑",result:{mood:-10}}]},
+ {id:"rand_4",type:"随机",weight:2,text:"一颗流星划过夜空，你也许下了愿望。",opts:[{text:"许愿变强",result:{soulExp:15}},{text:"许愿财富",result:{gold:100}},{text:"许愿健康",result:{hp:30,lifespan:2}}]},
+ {id:"rand_5",type:"随机",weight:1,text:"你被一道闪电击中，却奇迹般地没事。",opts:[{text:"检查身体",result:{physique:5,soulExp:20,flag:"struck_by_lightning"}},{text:"觉得是运气",result:{luck:5}}]}
+];
+
+/* ---- 结局 (8) ---- */
+const ENDINGS=[
+ {id:"god",name:"成神结局",priority:100,check:s=>s.flags.includes("become_god"),text:"你继承了神位，飞升成神，在人间留下了不朽的传说。大陆上的魂师们世世代代传颂着你的名字。"},
+ {id:"titled",name:"封号斗罗",priority:90,check:s=>s.soulLevel>=90,text:"你突破到了封号斗罗境界，成为大陆顶尖的强者。你的名号响彻云霄，各方势力都要给你三分薄面。"},
+ {id:"temple_master",name:"武魂殿之主",priority:85,check:s=>s.flags.includes("temple_master"),text:"你接任了武魂殿殿主之位，统领大陆最强大的势力。在你的治理下，武魂殿走向了新的辉煌。"},
+ {id:"war_hero",name:"战争英雄",priority:80,check:s=>s.flags.includes("war_hero")||s.flags.includes("war_commander"),text:"你在大陆战争中立下赫赫战功，成为了帝国的英雄。你的雕像被立在皇城中央，受万人敬仰。"},
+ {id:"family",name:"家族兴旺",priority:70,check:s=>s.flags.includes("married")&&s.children&&s.children.length>=2&&s.wealth>=500,text:"你子孙满堂，家族兴旺发达。虽然你没有站在大陆的巅峰，但你的后代将延续你的传奇。"},
+ {id:"recluse",name:"归隐结局",priority:60,check:s=>s.flags.includes("refuse_god")||(s.age>=50&&s.mood>=80),text:"你厌倦了纷争，选择归隐山林。与伴侣和伙伴们共度余生，平淡却幸福。"},
+ {id:"disaster",name:"灾难降临",priority:50,check:s=>s.flags.includes("destroy_world")||s.flags.includes("demon_accept")&&s.morality<20,text:"你释放了内心的黑暗，成为了大陆的灾难。在毁灭与疯狂中，你走到了终点。"},
+ {id:"death_legacy",name:"死亡传承",priority:40,check:s=>s.hp<=0||s.age>=s.lifespan,text:"你的生命走到了尽头，但你的意志和力量将由后代继承。新的传奇，从你的孩子开始。"}
+];
+
+/* ============ 游戏状态 ============ */
+let S=null;
+function newState(seed){
+ return {
+  seed,version:1,
+  screen:"title",
+  origin:null,traits:[],
+  name:"魂师",
+  age:6,lifespan:80,
+  soulLevel:1,soulExp:0,
+  comprehension:50,physique:50,luck:50,charm:50,family:10,wealth:50,reputation:0,morality:50,
+  hp:100,maxHp:100,mood:70,fatigue:0,
+  location:"village",
+  actionPoints:3,
+  month:1,year:1,
+  partners:[],activePartner:0,
+  items:{},equipment:{},
+  npcs:[],children:[],
+  flags:[],
+  reputation:{tiandou:0,xingluo:0,temple:0,sect:0,free:0,evil:0},
+  codex:{origins:[],traits:[],partners:[],endings:[]},
+  achievements:[],
+  battle:null,
+  eventLog:[],
+  rouletteUsed:false
+ };
+}
+
+/* 存档 */
+function save(){try{localStorage.setItem("douluo_save",JSON.stringify(S));}catch(e){}}
+function load(){try{const d=localStorage.getItem("douluo_save");if(d){S=JSON.parse(d);return true;}}catch(e){}return false;}
+function loadCodex(){try{const d=localStorage.getItem("douluo_codex");if(d)return JSON.parse(d);}catch(e){}return{origins:[],traits:[],partners:[],endings:[]};}
+function saveCodex(){try{localStorage.setItem("douluo_codex",JSON.stringify(S.codex));}catch(e){}}
+
+/* ============ 伙伴生成 ============ */
+function genPartner(speciesId,level=1){
+ const sp=SPECIES.find(s=>s.id===speciesId)||SPECIES[0];
+ const iv={hp:ri(0,31),atk:ri(0,31),def:ri(0,31),spd:ri(0,31),soul:ri(0,31)};
+ const natures=["勤奋","固执","开朗","胆小","保守","稳重","害羞","勇敢","冷静","调皮"];
+ const nature=pick(natures);
+ const stats={};
+ for(const k in sp.base){stats[k]=Math.floor((sp.base[k]*2+iv[k])*level/100+5);}
+ const skills=sp.skills.slice(0,Math.min(4,Math.ceil(level/5)+1));
+ const p={
+  id:Math.random().toString(36).slice(2),
+  species:sp.id,name:sp.name,nature,level,exp:0,
+  iv,stats,maxHp:stats.hp,hp:stats.hp,
+  intimacy:50,skills,rings:[],bones:{},
+  trait:sp.trait?sp.trait[0]:null,
+  evolved:false
+ };
+ if(!S.codex.partners.includes(sp.id)){S.codex.partners.push(sp.id);}
+ return p;
+}
+function partnerSpecies(p){return SPECIES.find(s=>s.id===p.species)||EVOLUTIONS[p.species]||{name:p.name,types:["强攻"],base:p.stats};}
+function calcStats(p){
+ const sp=partnerSpecies(p);
+ const base=sp.base;
+ for(const k in base){p.stats[k]=Math.floor((base[k]*2+p.iv[k])*p.level/100+5);}
+ p.maxHp=p.stats.hp;p.hp=Math.min(p.hp,p.maxHp);
+}
+function gainExp(p,amt){
+ p.exp+=amt;
+ while(p.exp>=p.level*20){
+  p.exp-=p.level*20;p.level++;calcStats(p);p.hp=p.maxHp;
+  const sp=partnerSpecies(p);
+  if(sp.evolve&&p.level>=sp.evolve.level&&!p.evolved){
+   if(!sp.evolve.item||S.items[sp.evolve.item]){
+    if(sp.evolve.item)S.items[sp.evolve.item]--;
+    p.species=sp.evolve.to;p.evolved=true;calcStats(p);
+    logEvent(p.name+"进化为了"+EVOLUTIONS[sp.evolve.to].name+"！");
+   }
+  }
+  if(p.level%10===0&&p.rings.length<9){
+   const year=RING_YEARS[Math.min(p.rings.length,4)];
+   p.rings.push(year.name);
+   const newSkill=(SPECIES.find(s=>s.id===p.species)||{skills:[]}).skills;
+   if(newSkill&&newSkill[p.rings.length])p.skills.push(newSkill[p.rings.length]);
+   if(p.skills.length>4)p.skills=p.skills.slice(-4);
+   logEvent(p.name+"吸收了"+year.name+"魂环！");
+  }
+ }
+}
+
+/* ============ 事件处理 ============ */
+function logEvent(text){S.eventLog.unshift({text,time:`第${S.year}年${S.month}月`});if(S.eventLog.length>50)S.eventLog.pop();}
+function toast(text){const t=document.createElement("div");t.className="toast";t.textContent=text;document.body.appendChild(t);setTimeout(()=>t.remove(),2000);}
+
+function applyResult(r,ev){
+ if(!r)return;
+ if(r.soulExp){S.soulExp+=r.soulExp;checkLevelUp();}
+ if(r.comprehension)S.comprehension+=r.comprehension;
+ if(r.physique)S.physique+=r.physique;
+ if(r.luck)S.luck+=r.luck;
+ if(r.charm)S.charm+=r.charm;
+ if(r.family)S.family+=r.family;
+ if(r.gold)S.wealth+=r.gold;
+ if(r.reputation)S.reputation+=r.reputation;
+ if(r.morality)S.morality=clamp(S.morality+r.morality,0,100);
+ if(r.hp){S.hp=clamp(S.hp+r.hp,0,S.maxHp);}
+ if(r.mood)S.mood=clamp(S.mood+r.mood,0,100);
+ if(r.fatigue)S.fatigue=clamp(S.fatigue+r.fatigue,0,100);
+ if(r.lifespan)S.lifespan+=r.lifespan;
+ if(r.flag&&!S.flags.includes(r.flag))S.flags.push(r.flag);
+ if(r.item){if(r.item==="随机"){const keys=Object.keys(ITEMS).filter(k=>ITEMS[k].price>0);S.items[pick(keys)]=(S.items[pick(keys)]||0)+1;}else{S.items[r.item]=(S.items[r.item]||0)+1;}}
+ if(r.location&&r.location!=="random")S.location=r.location;
+ if(r.location==="random"){const locs=Object.keys(LOCATIONS);S.location=pick(locs);}
+ if(r.rep){for(const k in r.rep){if(k==="random"){const ks=Object.keys(S.reputation);S.reputation[pick(ks)]+=r.rep[k];}else S.reputation[k]=(S.reputation[k]||0)+r.rep[k];}}
+ if(r.npc)addNPC(r.npc);
+ if(r.companion){
+  let sp;
+  if(r.companion==="random"||r.companion==="random_weak"||r.companion==="weak"){
+   const enc=LOCATIONS[S.location].enc||["bluegrass"];sp=pick(enc);
+  }else if(r.companion==="egg"){sp=pick(["bluegrass","softrabbit","shadowwolf"]);}
+  else if(r.companion==="rare"){sp=pick(["firephoenix","golddragon","lightunicorn","titangorilla"]);}
+  else if(r.companion==="divine"){sp=pick(["golddragon","firephoenix","lightunicorn"]);}
+  else if(r.companion==="chance"){if(chance(.5))sp=pick(LOCATIONS[S.location].enc||["bluegrass"]);}
+  if(sp&&S.partners.length<6){const p=genPartner(sp,ri(1,5));S.partners.push(p);logEvent("获得了伙伴："+p.name);toast("获得伙伴："+p.name);}
+ }
+ if(r.child){const child={name:"孩子"+(S.children.length+1),age:0,inherited:false};S.children.push(child);logEvent("你的孩子出生了！");}
+ if(r.awaken){awakenSoul();}
+ if(r.battle){startBattle(r.battle);}
+ if(r.catch){tryCatch(r.catch);}
+ if(r.luck_check&&!chance(S.luck/100)){toast("运气不佳...");}
+ if(r.charm_check&&!chance(S.charm/150)){toast("魅力不足...");}
+ if(r.skill){toast("学会了新魂技！");}
+ if(r.codex){toast("图鉴已记录！");}
+ save();
+}
+
+function checkLevelUp(){
+ const need=S.soulLevel*50;
+ if(S.soulExp>=need){S.soulExp-=need;S.soulLevel++;S.maxHp+=10;S.hp=S.maxHp;toast("魂力等级提升！当前："+soulRank(S.soulLevel));checkLevelUp();}
+}
+function soulRank(lv){
+ const ranks=["魂士","魂师","大魂师","魂尊","魂宗","魂王","魂帝","魂圣","魂斗罗","封号斗罗"];
+ return ranks[Math.min(Math.floor(lv/10),9)]+"("+lv+"级)";
+}
+
+function awakenSoul(){
+ const sp=pick(SPECIES.filter(s=>!["golddragon","titangorilla"].includes(s.id)));
+ const p=genPartner(sp.id,1);
+ S.partners.push(p);
+ logEvent("武魂觉醒！你获得了初始伙伴："+p.name);
+ toast("武魂觉醒："+p.name);
+ if(S.flags.includes("twin_soul")){
+  const sp2=pick(SPECIES.filter(s=>s.id!==sp.id));
+  S.partners.push(genPartner(sp2.id,1));
+  logEvent("双生武魂！第二伙伴："+S.partners[1].name);
+ }
+ if(S.flags.includes("companion_beast")||S.traits.find(t=>t.id==="companion_beast")){
+  const sp3=pick(["softrabbit","shadowwolf","ghostcat"]);
+  S.partners.push(genPartner(sp3.id,1));
+ }
+}
+
+function addNPC(type){
+ const names=["张三","李四","王五","赵六","墨白","柳青","苏瑶","萧炎","林动","唐三","霍雨浩","唐舞麟"];
+ const npc={name:pick(names),type,affinity:ri(20,60),age:ri(10,40)};
+ if(type==="lover"||type==="spouse")npc.affinity=80;
+ if(type==="rival")npc.affinity=-20;
+ S.npcs.push(npc);
+ logEvent("认识了"+npc.name+"("+type+")");
+}
+
+/* ============ 命运轮盘 ============ */
+function getRouletteEvents(){
+ const pool=EVENTS.filter(e=>{
+  if(e.flagReq&&!S.flags.includes(e.flagReq))return false;
+  if(e.ageReq&&S.age<e.ageReq)return false;
+  return true;
+ });
+ return pool;
+}
+function spinRoulette(){
+ if(S.rouletteUsed){toast("本月已转动过轮盘");return;}
+ S.rouletteUsed=true;
+ const pool=getRouletteEvents();
+ const ev=weightedPick(pool,e=>e.weight*(S.luck>70&&e.type.includes("隐藏")?2:1));
+ triggerEvent(ev);
+}
+
+function triggerEvent(ev){
+ S.battle=null;
+ const box=document.createElement("div");
+ box.className="modal";
+ box.innerHTML=`<div class="modal-box">
+  <div class="tag ${ev.type.includes('主线')?'legend':'common'}" style="margin-bottom:8px">${ev.type}</div>
+  <div class="event-text">${ev.text}</div>
+  <div id="eventOpts"></div>
+ </div>`;
+ document.getElementById("modalRoot").appendChild(box);
+ const optsDiv=box.querySelector("#eventOpts");
+ ev.opts.forEach((opt,i)=>{
+  const b=document.createElement("button");
+  b.className="option";b.textContent=opt.text;
+  b.onclick=()=>{applyResult(opt.result,ev);box.remove();if(!S.battle)render();};
+  optsDiv.appendChild(b);
+ });
+}
+
+/* ============ 战斗系统 ============ */
+function startBattle(type){
+ let enemies=[];
+ const loc=LOCATIONS[S.location];
+ const enc=loc.enc&&loc.enc.length?loc.enc:["bluegrass"];
+ if(type==="random"||type==="weak"){const lv=Math.max(1,S.soulLevel-2+ri(-2,3));enemies=[genPartner(pick(enc),lv)];}
+ else if(type==="group"){for(let i=0;i<ri(2,3);i++)enemies.push(genPartner(pick(enc),Math.max(1,S.soulLevel-3)));}
+ else if(type==="rare"){enemies=[genPartner(pick(["firephoenix","golddragon","lightunicorn","facespider"]),S.soulLevel+ri(0,5))];}
+ else if(type==="boss"||type==="revenge_boss"||type==="revenge_final"){enemies=[genPartner(pick(["titangorilla","golddragon","facespider"]),S.soulLevel+ri(3,8))];}
+ else if(type==="bandit"||type==="gang"||type==="duel"){enemies=[genPartner(pick(["shadowwolf","ghostcat","whitetiger"]),Math.max(1,S.soulLevel+ri(-1,3)))];}
+ else if(type==="war"||type==="final_war"){for(let i=0;i<3;i++)enemies.push(genPartner(pick(["whitetiger","ghostcat","thundereagle"]),S.soulLevel+ri(0,4)));}
+ else if(type==="escort"){enemies=[genPartner("shadowwolf",Math.max(1,S.soulLevel-1))];}
+ else if(type==="divine"||type==="god_trial"){enemies=[genPartner(pick(["golddragon","firephoenix"]),S.soulLevel+10)];}
+ else enemies=[genPartner(pick(enc),Math.max(1,S.soulLevel))];
+ if(!S.partners.length){S.partners.push(genPartner("bluegrass",1));}
+ S.partners.forEach(p=>p.hp=p.maxHp);
+ S.battle={enemies,turn:0,playerIdx:S.activePartner,enemyIdx:0,log:[],phase:"action",wild:type==="random"||type==="rare"||type==="weak"};
+ render();
+}
+
+function battleAction(skillName){
+ const b=S.battle;if(!b||b.phase!=="action")return;
+ const player=S.partners[b.playerIdx];
+ const enemy=b.enemies[b.enemyIdx];
+ if(!player||player.hp<=0){toast("该伙伴已倒下");return;}
+ const skill=SKILLS[skillName]||SKILLS["普通攻击"];
+ // 玩家攻击
+ const dmg=calcDamage(player,enemy,skill);
+ enemy.hp=Math.max(0,enemy.hp-dmg);
+ b.log.push(`${player.name}使用了${skillName}，造成${dmg}点伤害！`);
+ if(skill.effect&&skill.effect.status&&chance(skill.effect.chance||.3)){
+  enemy.status=skill.effect.status;b.log.push(`${enemy.name}陷入了${skill.effect.status}状态！`);
+ }
+ if(skill.effect&&skill.effect.drain){player.hp=Math.min(player.maxHp,player.hp+Math.floor(dmg*skill.effect.drain));}
+ if(enemy.hp<=0){b.log.push(`${enemy.name}被击败了！`);b.enemyIdx++;if(b.enemyIdx>=b.enemies.length){battleEnd(true);return;}b.phase="action";render();return;}
+ // 敌人攻击
+ setTimeout(()=>{
+  if(enemy.status==="眩晕"||enemy.status==="冰冻"||enemy.status==="石化"){b.log.push(`${enemy.name}无法行动！`);enemy.status=null;}
+  else{
+   const esk=pick(SKILLS[enemy.skills[0]]?enemy.skills:["普通攻击"]);
+   const edmg=calcDamage(enemy,player,SKILLS[esk]||SKILLS["普通攻击"]);
+   player.hp=Math.max(0,player.hp-edmg);
+   b.log.push(`${enemy.name}使用了${esk}，造成${edmg}点伤害！`);
+   if(player.hp<=0){b.log.push(`${player.name}倒下了！`);const next=S.partners.findIndex(p=>p.hp>0);if(next>=0){b.playerIdx=next;}else{battleEnd(false);return;}}
+  }
+  b.turn++;render();
+ },500);
+}
+
+function calcDamage(attacker,defender,skill){
+ const sp=partnerSpecies(attacker);
+ const dsp=partnerSpecies(defender);
+ let atk=attacker.stats.atk,def=defender.stats.def;
+ let mult=1;
+ for(const t of sp.types)for(const dt of dsp.types)mult*=typeMult(t,dt);
+ const base=((attacker.level*2/5+2)*skill.power*atk/def)/50+2;
+ let dmg=Math.floor(base*mult*ri(85,100)/100);
+ if(mult>1)S.battle.log.push("效果拔群！");
+ if(mult<1)S.battle.log.push("效果不佳...");
+ return Math.max(1,dmg);
+}
+
+function battleSwitch(idx){
+ const b=S.battle;if(!b)return;
+ if(S.partners[idx]&&S.partners[idx].hp>0){b.playerIdx=idx;b.log.push(`换上了${S.partners[idx].name}！`);
+  const enemy=b.enemies[b.enemyIdx];const esk=pick(enemy.skills);const edmg=calcDamage(enemy,S.partners[idx],SKILLS[esk]||SKILLS["普通攻击"]);
+  S.partners[idx].hp=Math.max(0,S.partners[idx].hp-edmg);b.log.push(`${enemy.name}趁机攻击，造成${edmg}点伤害！`);
+  if(S.partners[idx].hp<=0){b.log.push(`${S.partners[idx].name}倒下了！`);const next=S.partners.findIndex(p=>p.hp>0);if(next>=0)b.playerIdx=next;else{battleEnd(false);return;}}
+  render();
+ }
+}
+function battleFlee(){if(chance(.6+S.luck/200)){S.battle=null;logEvent("你成功逃离了战斗。");render();}else{toast("逃跑失败！");const b=S.battle;const enemy=b.enemies[b.enemyIdx];const p=S.partners[b.playerIdx];const edmg=calcDamage(enemy,p,SKILLS["普通攻击"]);p.hp=Math.max(0,p.hp-edmg);b.log.push("逃跑失败，受到攻击！");if(p.hp<=0){const next=S.partners.findIndex(pp=>pp.hp>0);if(next>=0)b.playerIdx=next;else{battleEnd(false);return;}}render();}}
+function battleCatch(){
+ const b=S.battle;if(!b||!b.wild){toast("无法捕捉");return;}
+ const balls=Object.keys(S.items).filter(k=>ITEMS[k]&&ITEMS[k].type==="ball"&&S.items[k]>0);
+ if(!balls.length){toast("没有契约器了！");return;}
+ const ball=balls[0];S.items[ball]--;
+ const enemy=b.enemies[b.enemyIdx];
+ const hpRate=enemy.hp/enemy.maxHp;
+ const sp=SPECIES.find(s=>s.id===enemy.species)||{catch:30};
+ let rate=(1-hpRate)*0.5+0.1;rate*=ITEMS[ball].catch;rate*=(100-sp.catch)/100+0.3;
+ if(enemy.status)rate*=1.5;
+ if(chance(rate)){
+  S.partners.push(enemy);logEvent("成功收服了"+enemy.name+"！");toast("收服成功："+enemy.name);
+  b.enemies.splice(b.enemyIdx,1);
+  if(b.enemyIdx>=b.enemies.length){battleEnd(true);return;}
+  render();
+ }else{b.log.push("收服失败！");if(chance(.3)){b.log.push(enemy.name+"逃跑了！");b.enemies.splice(b.enemyIdx,1);if(b.enemyIdx>=b.enemies.length){battleEnd(true);return;}}render();}
+}
+function battleEnd(win){
+ const b=S.battle;
+ if(win){
+  const totalExp=b.enemies.reduce((s,e)=>s+e.level*10,0);
+  S.partners.forEach(p=>{if(p.hp>0)gainExp(p,Math.floor(totalExp/S.partners.filter(pp=>pp.hp>0).length));});
+  S.soulExp+=totalExp;checkLevelUp();
+  S.reputation+=5;S.mood=clamp(S.mood+5,0,100);
+  if(chance(.3)){const loot=pick(["草药","干粮","普通契约器"]);S.items[loot]=(S.items[loot]||0)+1;logEvent("获得战利品："+loot);}
+  logEvent("战斗胜利！");
+ }else{
+  S.hp=Math.max(1,S.hp-20);S.mood=clamp(S.mood-15,0,100);S.fatigue=clamp(S.fatigue+20,0,100);
+  logEvent("战斗失败，你受了伤。");
+  if(S.hp<=0){checkDeath();}
+ }
+ S.battle=null;save();render();
+}
+
+/* ============ 死亡与结局 ============ */
+function checkDeath(){
+ if(S.hp<=0||S.age>=S.lifespan){
+  const ending=ENDINGS.find(e=>e.check(S))||ENDINGS[ENDINGS.length-1];
+  if(!S.codex.endings.includes(ending.id))S.codex.endings.push(ending.id);
+  saveCodex();
+  showEnding(ending);
+ }
+}
+function showEnding(ending){
+ const box=document.createElement("div");
+ box.className="modal";
+ box.innerHTML=`<div class="modal-box" style="text-align:center">
+  <h2 class="title">${ending.name}</h2>
+  <p style="line-height:1.8;margin:20px 0">${ending.text}</p>
+  <p style="color:var(--muted);font-size:13px">享年 ${S.age} 岁 · ${soulRank(S.soulLevel)}</p>
+  <div class="row" style="justify-content:center;margin-top:16px">
+   <button class="btn primary" onclick="this.closest('.modal').remove();S.screen='title';render();">返回标题</button>
+   ${S.children&&S.children.length?'<button class="btn" onclick="this.closest(\'.modal\').remove();continueAsChild();">以子女继续</button>':''}
+  </div>
+ </div>`;
+ document.getElementById("modalRoot").appendChild(box);
+}
+function continueAsChild(){
+ if(!S.children.length)return;
+ const child=S.children[0];
+ const oldName=S.name;
+ S.name=child.name||"后代";
+ S.age=6;S.hp=S.maxHp;S.mood=70;S.fatigue=0;
+ S.soulLevel=Math.max(1,Math.floor(S.soulLevel/3));
+ S.soulExp=0;S.wealth=Math.floor(S.wealth/2);
+ S.reputation=Math.floor(S.reputation/2);
+ S.flags=S.flags.filter(f=>!f.startsWith("war_")&&!f.startsWith("main_"));
+ S.partners=S.partners.slice(0,3);
+ S.children=S.children.slice(1);
+ logEvent(oldName+"离世，你作为其后代继承了家业。");
+ save();render();
+}
+
+/* ============ 每月行动 ============ */
+function doAction(action){
+ if(S.actionPoints<=0){toast("行动点不足，请推进时间");return;}
+ S.actionPoints--;
+ if(action==="cultivate"){S.soulExp+=10+Math.floor(S.comprehension/10);S.fatigue+=15;checkLevelUp();logEvent("你潜心修炼，魂力有所增长。");}
+ else if(action==="explore"){S.fatigue+=10;if(chance(.5)){const enc=LOCATIONS[S.location].enc;if(enc&&enc.length){const p=genPartner(pick(enc),ri(1,Math.max(1,S.soulLevel)));startBattle("random");return;}}toast("什么也没发现...");}
+ else if(action==="social"){S.mood+=10;S.fatigue+=5;if(chance(.4))addNPC("friend");logEvent("你外出社交，心情愉悦。");}
+ else if(action==="work"){S.wealth+=30+Math.floor(S.reputation/5);S.fatigue+=20;S.mood-=5;logEvent("你工作赚取了一些金魂币。");}
+ else if(action==="rest"){S.hp=Math.min(S.maxHp,S.hp+30);S.mood+=10;S.fatigue=Math.max(0,S.fatigue-30);logEvent("你休息了一番，恢复了精力。");}
+ else if(action==="shop"){openShop();return;}
+ save();render();
+}
+function advanceMonth(){
+ S.month++;if(S.month>12){S.month=1;S.year++;S.age++;}
+ S.actionPoints=3;S.rouletteUsed=false;
+ S.fatigue=Math.max(0,S.fatigue-10);
+ S.hp=Math.min(S.maxHp,S.hp+5);
+ if(S.fatigue>80){S.hp-=10;S.mood-=10;logEvent("过度疲劳，健康受损。");}
+ if(S.mood<20){S.comprehension=Math.max(1,S.comprehension-1);}
+ // 子女成长
+ S.children.forEach(c=>{c.age++;if(c.age===6&&!c.inherited){c.inherited=true;logEvent(c.name+"六岁了，可以开始修炼。");}});
+ checkDeath();
+ save();render();
+}
+
+/* ============ 商店 ============ */
+function openShop(){
+ const loc=LOCATIONS[S.location];
+ if(!loc.shop||!loc.shop.length){toast("此处没有商店");return;}
+ const box=document.createElement("div");
+ box.className="modal";
+ let html=`<div class="modal-box"><h3 class="title">${loc.name}商店</h3><p>金魂币：<b class="gold">${S.wealth}</b></p><div id="shopList"></div><button class="btn" style="margin-top:10px" onclick="this.closest('.modal').remove()">关闭</button></div>`;
+ box.innerHTML=html;
+ document.getElementById("modalRoot").appendChild(box);
+ const list=box.querySelector("#shopList");
+ loc.shop.forEach(itemName=>{
+  const item=ITEMS[itemName];if(!item)return;
+  const d=document.createElement("div");
+  d.className="card";d.style.display="flex";d.style.justifyContent="space-between";d.style.alignItems="center";
+  d.innerHTML=`<div><b>${itemName}</b><br><span style="font-size:12px;color:var(--muted)">${item.desc}</span></div><button class="btn small primary">${item.price}金</button>`;
+  d.querySelector("button").onclick=()=>{if(S.wealth>=item.price){S.wealth-=item.price;S.items[itemName]=(S.items[itemName]||0)+1;toast("购买成功");save();box.remove();openShop();}else toast("金魂币不足");};
+  list.appendChild(d);
+ });
+}
+
+/* ============ UI 渲染 ============ */
+const SCREENS={title,gacha,main,character,partners,map,roulette,battleScreen,npc,family,codex,settings};
+
+function render(){
+ const app=document.getElementById("screens");
+ app.innerHTML="";
+ const fn=SCREENS[S.screen]||main;
+ const div=document.createElement("div");div.className="screen active";div.id="screen-"+S.screen;
+ app.appendChild(div);
+ fn(div);
+ renderTopbar();renderNav();
+}
+
+function renderTopbar(){
+ const tb=document.getElementById("topbar");
+ if(S.screen==="title"||S.screen==="gacha"){tb.style.display="none";return;}
+ tb.style.display="flex";
+ tb.innerHTML=`<span>📍${LOCATIONS[S.location]?.name||S.location}</span>
+  <span>📅第${S.year}年${S.month}月</span>
+  <span>🎂${S.age}岁</span>
+  <span>⚡${soulRank(S.soulLevel)}</span>
+  <span class="gold">💰${S.wealth}</span>
+  <span>❤️${S.hp}/${S.maxHp}</span>
+  <span>🔵行动${S.actionPoints}</span>`;
+}
+function renderNav(){
+ const nav=document.getElementById("nav");
+ if(S.screen==="title"||S.screen==="gacha"||S.screen==="battle"){nav.style.display="none";return;}
+ nav.style.display="flex";
+ const items=[["main","主页"],["character","角色"],["partners","伙伴"],["map","地图"],["roulette","轮盘"],["npc","关系"],["family","家族"],["codex","图鉴"],["settings","设置"]];
+ nav.innerHTML=items.map(([id,name])=>`<button class="btn ${S.screen===id?'primary':''}" onclick="S.screen='${id}';render()">${name}</button>`).join("");
+}
+
+/* ---- 标题 ---- */
+function title(div){
+ div.innerHTML=`<div class="gacha-stage">
+  <h1 class="title" style="font-size:36px">斗罗：武魂人生</h1>
+  <p style="color:var(--muted);margin-bottom:20px">类宝可梦 × 模拟人生 × 随机叙事</p>
+  <div class="col" style="gap:10px">
+   <button class="btn primary" style="width:200px" onclick="startGacha()">开始新游戏</button>
+   <button class="btn" style="width:200px" onclick="if(load()){S.screen='main';render();}else toast('没有存档')">继续游戏</button>
+   <button class="btn" style="width:200px" onclick="S.screen='codex';render()">图鉴成就</button>
+  </div>
+  <p style="color:var(--muted);font-size:12px;margin-top:30px">数据保存在本地，可离线运行</p>
+ </div>`;
+}
+
+/* ---- 抽卡 ---- */
+let gachaState=null;
+function startGacha(){
+ gachaState={step:0,origin:null,traits:[],revealed:false};
+ S=newState((Date.now()&0xffffffff));
+ S.codex=loadCodex();
+ S.screen="gacha";render();
+}
+function gacha(div){
+ div.innerHTML=`<div class="gacha-stage">
+  <h2 class="title">武魂觉醒·抽卡</h2>
+  <div id="gachaCards" class="row" style="justify-content:center"></div>
+  <div id="gachaInfo"></div>
+  <div class="row" style="justify-content:center;margin-top:16px">
+   <button id="gachaBtn" class="btn primary" onclick="gachaDraw()">抽取出身</button>
+  </div>
+ </div>`;
+}
+function gachaDraw(){
+ if(gachaState.step===0){
+  const origin=weightedPick(ORIGINS,o=>RARITY[o.rarity].weight);
+  gachaState.origin=origin;gachaState.step=1;
+  if(!S.codex.origins.includes(origin.id))S.codex.origins.push(origin.id);
+  const cards=document.getElementById("gachaCards");
+  cards.innerHTML=`<div class="card-flip flipped" onclick="this.classList.toggle('flipped')">
+   <div class="card-inner"><div class="card-face card-back"></div>
+   <div class="card-face card-front">
+    <div class="rarity tag ${origin.rarity}">${RARITY[origin.rarity].name}</div>
+    <h3>${origin.name}</h3><p>${origin.desc}</p>
+   </div></div></div>`;
+  document.getElementById("gachaBtn").textContent="抽取词条";
+  document.getElementById("gachaInfo").innerHTML=`<p style="color:var(--gold2)">核心出身：${origin.name}</p>`;
+ }else if(gachaState.step<5){
+  const available=TRAITS.filter(t=>!gachaState.traits.find(gt=>gt.id===t.id));
+  const trait=pick(available);
+  gachaState.traits.push(trait);
+  if(!S.codex.traits.includes(trait.id))S.codex.traits.push(trait.id);
+  const cards=document.getElementById("gachaCards");
+  const card=document.createElement("div");
+  card.className="card-flip flipped";card.style.width="140px";card.style.height="200px";
+  card.innerHTML=`<div class="card-inner"><div class="card-face card-back"></div>
+   <div class="card-face card-front" style="border-color:${RARITY[trait.type==='特殊'?'legend':'rare'].color}">
+    <div class="rarity tag ${trait.type==='特殊'?'legend':'rare'}">${trait.type}</div>
+    <h3 style="font-size:16px">${trait.name}</h3><p style="font-size:11px">${trait.desc}</p>
+   </div></div>`;
+  cards.appendChild(card);
+  gachaState.step++;
+  if(gachaState.step>=5){
+   document.getElementById("gachaBtn").textContent="确认开始人生";
+   document.getElementById("gachaBtn").onclick=confirmGacha;
+  }
+ }
+}
+function confirmGacha(){
+ const o=gachaState.origin;
+ S.origin=o.id;S.traits=gachaState.traits;
+ S.name=o.name;
+ // 应用出身属性
+ for(const k in o.stats)S[k]=o.stats[k];
+ S.location=o.location||"village";
+ if(o.resources){S.wealth=o.resources.gold||S.wealth;if(o.resources.item)S.items[o.resources.item]=(S.items[o.resources.item]||0)+1;}
+ if(o.relations)o.relations.forEach(r=>addNPC("亲属"));
+ if(o.flags)o.flags.forEach(f=>{if(!S.flags.includes(f))S.flags.push(f);});
+ if(o.rep)for(const k in o.rep)S.reputation[k]=(S.reputation[k]||0)+o.rep[k];
+ // 应用词条
+ gachaState.traits.forEach(t=>{
+  if(t.stats)for(const k in t.stats){if(k==="soulGain"){}else S[k]=(S[k]||0)+t.stats[k];}
+  if(t.flags)t.flags.forEach(f=>{if(!S.flags.includes(f))S.flags.push(f);});
+  if(t.items)t.items.forEach(it=>S.items[it]=(S.items[it]||0)+1);
+  if(t.special==="companion"){/* 觉醒时给 */}
+ });
+ S.maxHp=100+Math.floor(S.physique/2);S.hp=S.maxHp;
+ saveCodex();save();
+ S.screen="main";render();
+ toast("人生开始！");
+}
+
+/* ---- 主页 ---- */
+function main(div){
+ const active=S.partners[S.activePartner];
+ div.innerHTML=`
+  <div class="card">
+   <h3 style="color:var(--gold2)">${S.name} · ${soulRank(S.soulLevel)}</h3>
+   <p style="color:var(--muted);font-size:13px">出身：${ORIGINS.find(o=>o.id===S.origin)?.name||"未知"}</p>
+   <div class="grid grid-2" style="margin-top:8px">
+    <div class="stat"><span>年龄</span><b>${S.age}/${S.lifespan}</b></div>
+    <div class="stat"><span>悟性</span><b>${S.comprehension}</b></div>
+    <div class="stat"><span>体质</span><b>${S.physique}</b></div>
+    <div class="stat"><span>气运</span><b>${S.luck}</b></div>
+    <div class="stat"><span>魅力</span><b>${S.charm}</b></div>
+    <div class="stat"><span>道德</span><b>${S.morality}</b></div>
+    <div class="stat"><span>声望</span><b>${S.reputation}</b></div>
+    <div class="stat"><span>家世</span><b>${S.family}</b></div>
+   </div>
+   <div style="margin-top:8px"><span style="font-size:12px">生命</span><div class="bar"><div style="width:${S.hp/S.maxHp*100}%"></div></div></div>
+   <div><span style="font-size:12px">心情</span><div class="bar"><div style="width:${S.mood}%;background:linear-gradient(90deg,#ff6b9d,#c77dff)"></div></div></div>
+   <div><span style="font-size:12px">疲劳</span><div class="bar"><div style="width:${S.fatigue}%;background:linear-gradient(90deg,#666,#999)"></div></div></div>
+  </div>
+  <div class="card">
+   <h3 style="color:var(--gold2)">当前伙伴</h3>
+   ${active?`<p>${active.name} Lv.${active.level} · HP ${active.hp}/${active.maxHp}</p>`:'<p style="color:var(--muted)">暂无伙伴，去探索或觉醒吧</p>'}
+  </div>
+  <div class="card">
+   <h3 style="color:var(--gold2)">本月行动（剩余${S.actionPoints}）</h3>
+   <div class="grid grid-3">
+    <button class="btn" onclick="doAction('cultivate')">🧘修炼</button>
+    <button class="btn" onclick="doAction('explore')">🗺️探索</button>
+    <button class="btn" onclick="doAction('social')">💬社交</button>
+    <button class="btn" onclick="doAction('work')">💼工作</button>
+    <button class="btn" onclick="doAction('rest')">😴休息</button>
+    <button class="btn" onclick="doAction('shop')">🏪商店</button>
+   </div>
+   <button class="btn primary" style="width:100%;margin-top:10px" onclick="advanceMonth()">⏭️ 推进一个月</button>
+  </div>
+  <div class="card">
+   <h3 style="color:var(--gold2)">近期事件</h3>
+   ${S.eventLog.slice(0,5).map(e=>`<div style="font-size:12px;padding:3px 0;border-bottom:1px dashed #2a2240"><span style="color:var(--muted)">${e.time}</span> ${e.text}</div>`).join('')||'<p style="color:var(--muted)">暂无记录</p>'}
+  </div>`;
+}
+
+/* ---- 角色面板 ---- */
+function character(div){
+ div.innerHTML=`<div class="card"><h3 class="title">角色详情</h3>
+  <div class="grid grid-2">
+   <div class="stat"><span>出身</span><b>${ORIGINS.find(o=>o.id===S.origin)?.name||"-"}</b></div>
+   <div class="stat"><span>年龄</span><b>${S.age}/${S.lifespan}</b></div>
+   <div class="stat"><span>魂力等级</span><b>${soulRank(S.soulLevel)}</b></div>
+   <div class="stat"><span>魂力经验</span><b>${S.soulExp}/${S.soulLevel*50}</b></div>
+   <div class="stat"><span>悟性</span><b>${S.comprehension}</b></div>
+   <div class="stat"><span>体质</span><b>${S.physique}</b></div>
+   <div class="stat"><span>气运</span><b>${S.luck}</b></div>
+   <div class="stat"><span>魅力</span><b>${S.charm}</b></div>
+   <div class="stat"><span>家世</span><b>${S.family}</b></div>
+   <div class="stat"><span>财富</span><b>${S.wealth}</b></div>
+   <div class="stat"><span>声望</span><b>${S.reputation}</b></div>
+   <div class="stat"><span>道德</span><b>${S.morality}</b></div>
+  </div>
+  <h4 style="margin-top:12px;color:var(--gold2)">词条</h4>
+  <div class="row">${S.traits.map(t=>`<span class="tag ${t.type==='特殊'?'legend':'rare'}">${t.name}</span>`).join('')||'<span style="color:var(--muted)">无</span>'}</div>
+  <h4 style="margin-top:12px;color:var(--gold2)">标记</h4>
+  <div class="row">${S.flags.map(f=>`<span class="tag common">${f}</span>`).join('')||'<span style="color:var(--muted)">无</span>'}</div>
+  <h4 style="margin-top:12px;color:var(--gold2)">背包</h4>
+  <div class="row">${Object.entries(S.items).filter(([k,v])=>v>0).map(([k,v])=>`<span class="tag common">${k}×${v}</span>`).join('')||'<span style="color:var(--muted)">空</span>'}</div>
+ </div>`;
+}
+
+/* ---- 伙伴 ---- */
+function partners(div){
+ let html=`<div class="card"><h3 class="title">伙伴队伍（${S.partners.length}/6）</h3>`;
+ S.partners.forEach((p,i)=>{
+  const sp=partnerSpecies(p);
+  html+=`<div class="card" style="background:var(--panel2)">
+   <div class="row" style="justify-content:space-between">
+    <div><b>${p.name}</b> <span class="tag rare">Lv.${p.level}</span> <span class="tag common">${sp.types.join('/')}</span></div>
+    <div>${p.hp}/${p.maxHp}HP</div>
+   </div>
+   <div style="font-size:12px;color:var(--muted);margin:4px 0">性格：${p.nature} · 亲密：${p.intimacy} · 特性：${p.trait||'-'}</div>
+   <div style="font-size:12px">攻${p.stats.atk} 防${p.stats.def} 速${p.stats.spd} 魂${p.stats.soul}</div>
+   <div style="font-size:12px;color:var(--gold2)">魂环：${p.rings.join(' ')||'无'}</div>
+   <div class="row" style="margin-top:6px">
+    <button class="btn small ${S.activePartner===i?'primary':''}" onclick="S.activePartner=${i};save();render()">出战</button>
+    <button class="btn small" onclick="showPartnerSkills(${i})">技能</button>
+   </div>
+  </div>`;
+ });
+ if(!S.partners.length)html+='<p style="color:var(--muted)">暂无伙伴，通过探索、事件或战斗收服</p>';
+ html+='</div>';
+ div.innerHTML=html;
+}
+function showPartnerSkills(i){
+ const p=S.partners[i];
+ const box=document.createElement("div");box.className="modal";
+ box.innerHTML=`<div class="modal-box"><h3 class="title">${p.name}的魂技</h3>
+  ${p.skills.map(sn=>{const sk=SKILLS[sn];return`<div class="card"><b>${sn}</b> <span class="tag common">${sk.type}</span><br><span style="font-size:12px;color:var(--muted)">${sk.desc}</span><br><span style="font-size:12px">威力${sk.power} 命中${sk.acc} PP${sk.pp}</span></div>`;}).join('')}
+  <button class="btn" style="width:100%" onclick="this.closest('.modal').remove()">关闭</button></div>`;
+ document.getElementById("modalRoot").appendChild(box);
+}
+
+/* ---- 地图 ---- */
+function map(div){
+ let html=`<div class="card"><h3 class="title">世界地图</h3><p style="color:var(--muted);font-size:13px">当前位置：${LOCATIONS[S.location].name}</p></div>`;
+ for(const id in LOCATIONS){
+  const loc=LOCATIONS[id];
+  const unlocked=id===S.location||S.flags.includes("unlock_"+id)||["village","town","academy","city","forest_edge"].includes(id);
+  html+=`<div class="card" style="${unlocked?'':'opacity:0.5'}">
+   <div class="row" style="justify-content:space-between">
+    <b>${loc.name}${id===S.location?' 📍':''}</b>
+    ${unlocked?`<button class="btn small primary" onclick="S.location='${id}';save();render()">前往</button>`:'<span class="tag common">未解锁</span>'}
+   </div>
+   <p style="font-size:12px;color:var(--muted);margin-top:4px">${loc.desc}</p>
+   <p style="font-size:11px;color:var(--muted)">遭遇：${(loc.enc||[]).map(e=>SPECIES.find(s=>s.id===e)?.name).join('、')||'无'}</p>
+  </div>`;
+ }
+ div.innerHTML=html;
+}
+
+/* ---- 轮盘 ---- */
+function roulette(div){
+ div.innerHTML=`<div class="roulette-wrap">
+  <h3 class="title">命运轮盘</h3>
+  <p style="color:var(--muted);font-size:13px">${S.rouletteUsed?'本月已转动过':'每月可转动一次，触发随机事件'}</p>
+  <div class="pointer"></div>
+  <canvas id="rouletteCanvas" width="340" height="340"></canvas>
+  <button class="btn primary" id="spinBtn" onclick="doSpin()" ${S.rouletteUsed?'disabled':''}>转动轮盘</button>
+  <p style="color:var(--muted);font-size:12px">气运越高，稀有事件概率越大</p>
+ </div>`;
+ drawRoulette();
+}
+function drawRoulette(){
+ const cv=document.getElementById("rouletteCanvas");if(!cv)return;
+ const ctx=cv.getContext("2d");const cx=170,cy=170,r=160;
+ const pool=getRouletteEvents();
+ const types=[...new Set(pool.map(e=>e.type))];
+ const colors=["#d4af37","#c77dff","#6ec1ff","#7ee787","#ff6b6b","#ffb347","#6ec1ff","#c77dff"];
+ ctx.clearRect(0,0,340,340);
+ const step=Math.PI*2/types.length;
+ types.forEach((t,i)=>{
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,i*step,(i+1)*step);ctx.closePath();
+  ctx.fillStyle=colors[i%colors.length];ctx.fill();ctx.strokeStyle="#000";ctx.lineWidth=2;ctx.stroke();
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(i*step+step/2);
+  ctx.fillStyle="#000";ctx.font="bold 11px sans-serif";ctx.textAlign="center";
+  ctx.fillText(t.slice(0,4),r/2,4);ctx.restore();
+ });
+ ctx.beginPath();ctx.arc(cx,cy,20,0,Math.PI*2);ctx.fillStyle="#1e1830";ctx.fill();ctx.strokeStyle="#d4af37";ctx.stroke();
+}
+function doSpin(){
+ const cv=document.getElementById("rouletteCanvas");
+ cv.style.transition="transform 3s cubic-bezier(.17,.67,.12,.99)";
+ cv.style.transform=`rotate(${ri(720,1440)}deg)`;
+ document.getElementById("spinBtn").disabled=true;
+ setTimeout(()=>{spinRoulette();},3000);
+}
+
+/* ---- 战斗 ---- */
+function battleScreen(div){
+ const b=S.battle;if(!b){S.screen="main";render();return;}
+ const player=S.partners[b.playerIdx];
+ const enemy=b.enemies[b.enemyIdx];
+ div.innerHTML=`
+  <div class="battle-field">
+   <div class="combatant" id="playerSide">
+    <div class="sprite">🐉</div>
+    <div><b>${player?.name||'-'}</b> Lv.${player?.level}</div>
+    <div class="hpbar"><div style="width:${player?(player.hp/player.maxHp*100):0}%"></div></div>
+    <div style="font-size:11px">${player?.hp||0}/${player?.maxHp||0}</div>
+   </div>
+   <div style="font-size:24px;color:var(--gold)">⚔️</div>
+   <div class="combatant" id="enemySide">
+    <div class="sprite">👹</div>
+    <div><b>${enemy?.name||'-'}</b> Lv.${enemy?.level}</div>
+    <div class="hpbar"><div style="width:${enemy?(enemy.hp/enemy.maxHp*100):0}%"></div></div>
+    <div style="font-size:11px">${enemy?.hp||0}/${enemy?.maxHp||0}${enemy?.status?' ['+enemy.status+']':''}</div>
+   </div>
+  </div>
+  <div class="log" id="battleLog">${b.log.slice(-6).map(l=>`<div>${l}</div>`).join('')}</div>
+  <div class="grid grid-2">
+   ${(player?.skills||["普通攻击"]).map(s=>`<button class="btn" onclick="battleAction('${s}')">${s}</button>`).join('')}
+  </div>
+  <div class="row" style="margin-top:8px">
+   <button class="btn small" onclick="battleCatch()" ${b.wild?'':'disabled'}>收服</button>
+   <button class="btn small" onclick="showSwitch()">更换</button>
+   <button class="btn small danger" onclick="battleFlee()">逃跑</button>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-top:6px">敌人剩余：${b.enemies.length-b.enemyIdx}</div>`;
+ const log=document.getElementById("battleLog");if(log)log.scrollTop=log.scrollHeight;
+}
+function showSwitch(){
+ const box=document.createElement("div");box.className="modal";
+ box.innerHTML=`<div class="modal-box"><h3 class="title">更换伙伴</h3>
+  ${S.partners.map((p,i)=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center">
+   <span>${p.name} Lv.${p.level} ${p.hp}/${p.maxHp}HP</span>
+   <button class="btn small ${p.hp<=0?'':'primary'}" ${p.hp<=0?'disabled':''} onclick="this.closest('.modal').remove();battleSwitch(${i})">换上</button>
+  </div>`).join('')}
+  <button class="btn" style="width:100%" onclick="this.closest('.modal').remove()">取消</button></div>`;
+ document.getElementById("modalRoot").appendChild(box);
+}
+
+/* ---- NPC ---- */
+function npc(div){
+ let html=`<div class="card"><h3 class="title">人际关系</h3>`;
+ if(!S.npcs.length)html+='<p style="color:var(--muted)">还不认识什么人</p>';
+ S.npcs.forEach((n,i)=>{
+  html+=`<div class="card" style="background:var(--panel2)">
+   <div class="row" style="justify-content:space-between">
+    <b>${n.name}</b><span class="tag ${n.type==='恋人'||n.type==='spouse'?'legend':'common'}">${n.type}</span>
+   </div>
+   <div style="font-size:12px;color:var(--muted)">好感度：${n.affinity} · 年龄：${n.age}</div>
+   <div class="bar"><div style="width:${clamp(n.affinity,0,100)}%;background:linear-gradient(90deg,#ff6b9d,#c77dff)"></div></div>
+   <div class="row" style="margin-top:6px">
+    <button class="btn small" onclick="npcInteract(${i},'talk')">交谈</button>
+    <button class="btn small" onclick="npcInteract(${i},'gift')">送礼(-30金)</button>
+    ${n.affinity>=80&&n.type!=='spouse'?`<button class="btn small primary" onclick="npcInteract(${i},'marry')">求婚</button>`:''}
+   </div>
+  </div>`;
+ });
+ html+='</div>';div.innerHTML=html;
+}
+function npcInteract(i,type){
+ const n=S.npcs[i];
+ if(type==="talk"){n.affinity+=ri(2,8);S.mood+=5;logEvent("你与"+n.name+"交谈甚欢。");}
+ else if(type==="gift"){if(S.wealth>=30){S.wealth-=30;n.affinity+=ri(5,15);logEvent("你送了礼物给"+n.name+"。");}else toast("金魂币不足");}
+ else if(type==="marry"){n.type="spouse";S.flags.push("married");const child={name:"孩子"+(S.children.length+1),age:0,inherited:false};S.children.push(child);logEvent("你与"+n.name+"结婚了！");toast("新婚快乐！");}
+ save();render();
+}
+
+/* ---- 家族 ---- */
+function family(div){
+ let html=`<div class="card"><h3 class="title">家族与后代</h3>`;
+ html+=`<p>配偶：${S.npcs.find(n=>n.type==='spouse')?.name||'无'}</p>`;
+ html+=`<p>子女：${S.children.length}人</p>`;
+ S.children.forEach((c,i)=>{
+  html+=`<div class="card" style="background:var(--panel2)"><b>${c.name}</b> · ${c.age}岁 ${c.age>=6?'(可修炼)':'(幼年)'}</div>`;
+ });
+ if(S.flags.includes("married"))html+='<p style="color:var(--muted);font-size:12px;margin-top:8px">已结婚，后代将继承你的部分天赋与资源。</p>';
+ html+='</div>';
+ div.innerHTML=html;
+}
+
+/* ---- 图鉴 ---- */
+function codex(div){
+ if(!S.codex)S.codex=loadCodex();
+ div.innerHTML=`
+  <div class="card"><h3 class="title">多周目图鉴</h3>
+   <h4 style="color:var(--gold2)">出身（${S.codex.origins.length}/${ORIGINS.length}）</h4>
+   <div class="row">${ORIGINS.map(o=>`<span class="tag ${S.codex.origins.includes(o.id)?o.rarity:'common'}">${S.codex.origins.includes(o.id)?o.name:'???'}</span>`).join('')}</div>
+   <h4 style="color:var(--gold2);margin-top:10px">词条（${S.codex.traits.length}/${TRAITS.length}）</h4>
+   <div class="row">${TRAITS.map(t=>`<span class="tag ${S.codex.traits.includes(t.id)?(t.type==='特殊'?'legend':'rare'):'common'}">${S.codex.traits.includes(t.id)?t.name:'???'}</span>`).join('')}</div>
+   <h4 style="color:var(--gold2);margin-top:10px">伙伴（${S.codex.partners.length}/${SPECIES.length}）</h4>
+   <div class="row">${SPECIES.map(s=>`<span class="tag ${S.codex.partners.includes(s.id)?'epic':'common'}">${S.codex.partners.includes(s.id)?s.name:'???'}</span>`).join('')}</div>
+   <h4 style="color:var(--gold2);margin-top:10px">结局（${S.codex.endings.length}/${ENDINGS.length}）</h4>
+   <div class="row">${ENDINGS.map(e=>`<span class="tag ${S.codex.endings.includes(e.id)?'legend':'common'}">${S.codex.endings.includes(e.id)?e.name:'???'}</span>`).join('')}</div>
+  </div>`;
+}
+
+/* ---- 设置 ---- */
+function settings(div){
+ div.innerHTML=`<div class="card"><h3 class="title">设置与存档</h3>
+  <div class="col" style="gap:10px">
+   <button class="btn primary" onclick="save();toast('已保存')">💾 保存游戏</button>
+   <button class="btn" onclick="exportSave()">📤 导出存档</button>
+   <button class="btn" onclick="importSave()">📥 导入存档</button>
+   <button class="btn danger" onclick="if(confirm('确定删除存档？')){localStorage.removeItem('douluo_save');S.screen='title';render();}">🗑️ 删除存档</button>
+   <button class="btn danger" onclick="if(confirm('确定清空图鉴？')){localStorage.removeItem('douluo_codex');S.codex=loadCodex();render();}">🗑️ 清空图鉴</button>
+  </div>
+  <p style="color:var(--muted);font-size:12px;margin-top:16px">游戏版本 v1.0 · 斗罗：武魂人生</p>
+ </div>`;
+}
+function exportSave(){
+ const str=btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+ const box=document.createElement("div");box.className="modal";
+ box.innerHTML=`<div class="modal-box"><h3 class="title">导出存档</h3>
+  <textarea style="width:100%;height:120px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:11px" readonly>${str}</textarea>
+  <button class="btn" style="width:100%;margin-top:8px" onclick="this.closest('.modal').remove()">关闭</button></div>`;
+ document.getElementById("modalRoot").appendChild(box);
+}
+function importSave(){
+ const box=document.createElement("div");box.className="modal";
+ box.innerHTML=`<div class="modal-box"><h3 class="title">导入存档</h3>
+  <textarea id="importText" placeholder="粘贴存档字符串" style="width:100%;height:120px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:11px"></textarea>
+  <button class="btn primary" style="width:100%;margin-top:8px" onclick="try{const t=document.getElementById('importText').value;S=JSON.parse(decodeURIComponent(escape(atob(t))));save();this.closest('.modal').remove();render();}catch(e){toast('存档无效');}">导入</button>
+  <button class="btn" style="width:100%;margin-top:4px" onclick="this.closest('.modal').remove()">取消</button></div>`;
+ document.getElementById("modalRoot").appendChild(box);
+}
+
+/* ============ 初始化 ============ */
+S=newState((Date.now()&0xffffffff));
+S.codex=loadCodex();
+S.screen="title";
+render();
+</script>
+</body>
+</html>
